@@ -31,4 +31,13 @@
     - awscli_installed_version.version is defined
     - awscli_installed_version.version.major is defined
 
+- name: update package cache
+  package:
+    update_cache: true
+
+- name: install dependencies
+  package:
+    name: "{{ awscli_dependencies }}"
+    state: present
+
 ...

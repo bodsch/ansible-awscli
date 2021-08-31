@@ -6,4 +6,7 @@ awscli_uninstall: false
 
 awscli_default_users: {}
 
+awscli_dependencies:
+  - unzip
+
 ...
