@@ -1,0 +1,36 @@
+---
+
+- import_tasks: prepare.yaml
+  tags:
+    - awscli_install
+    - awscli_configure
+    - awscli_run
+
+- name: installed awscli version
+  debug:
+    msg: "{{ awscli_installed_version.full_version }}"
+  when:
+    - awscli_installed_version.rc == 0  #full_version is defined
+
+- import_tasks: download.yaml
+  become: true
+  tags:
+    - awscli_install
+  when:
+    - awscli_versioned_installed is defined
+    - not awscli_versioned_installed.stat.exists
+
+- import_tasks: install.yaml
+  become: true
+  tags:
+    - awscli_install
+  when:
+    - awscli_versioned_installed is defined
+    - not awscli_versioned_installed.stat.exists
+
+- import_tasks: configure.yaml
+  become: true
+  tags:
+    - awscli_configure
+
+...

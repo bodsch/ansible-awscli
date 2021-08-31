@@ -1,0 +1,47 @@
+---
+
+- name: create ~/.aws directory
+  become: true
+  file:
+    path: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws"
+    owner: "{{ item.key }}"
+    group: "{{ item.value.group | default(item.key) }}"
+    state: directory
+    mode: 0o700
+    force: false
+  loop: "{{ awscli_users | dict2items }}"
+  loop_control:
+    label: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws"
+
+- name: create AWS CLI config file
+  become: true
+  template:
+    src: "{{ awscli_config }}"
+    dest: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws/config"
+    owner: "{{ item.key }}"
+    group: "{{ item.value.group | default(item.key) }}"
+    mode: 0o600
+    force: true
+  loop: "{{ awscli_users | dict2items }}"
+  loop_control:
+    label: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws/config"
+  when:
+    - item.value.profiles is defined
+
+- name: create AWS CLI credentials file
+  become: true
+  no_log: true
+  template:
+    src: "{{ awscli_credentials }}"
+    dest: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws/credentials"
+    owner: "{{ item.key }}"
+    group: "{{ item.value.group | default(item.key) }}"
+    mode: 0o600
+    force: true
+  loop: "{{ awscli_users | dict2items }}"
+  loop_control:
+    label: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws/credentials"
+  when:
+    - item.value.profiles is defined
+
+...

@@ -1,0 +1,34 @@
+---
+
+- name: detect if awscli {{ awscli_version }} is already installed
+  stat:
+    path: "/usr/local/bin/aws_{{ awscli_version }}"
+  register: awscli_versioned_installed
+
+- name: detect installed aws-cli version
+  awscli_version:
+  register: awscli_installed_version
+  check_mode: false
+  ignore_errors: true
+  # changed_when: awscli_installed_version.msg == "no awscli installed"
+
+- name: create local tmp directory
+  become: false
+  delegate_to: 127.0.0.1
+  file:
+    path: "{{ awscli_local_tmp_directory }}"
+    state: directory
+    mode: 0o750
+  when:
+    - awscli_versioned_installed is defined
+    - not awscli_versioned_installed.stat.exists
+
+- name: define uninstall awscli
+  set_fact:
+    awscli_uninstall: "{{ awscli_installed_version.version.major is version_compare(awscli_version.split('.') | first, '<') }}"
+  when:
+    - awscli_installed_version is defined
+    - awscli_installed_version.version is defined
+    - awscli_installed_version.version.major is defined
+
+...

@@ -1,0 +1,9 @@
+---
+
+awscli_local_tmp_directory: "/tmp/awscli/{{ awscli_version }}"
+
+awscli_uninstall: false
+
+awscli_default_users: {}
+
+...

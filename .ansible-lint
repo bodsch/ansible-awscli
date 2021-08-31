@@ -1,0 +1,12 @@
+---
+skip_list:
+  - role-name
+
+exclude_paths:
+  - .tox
+  - .github
+  - molecule
+
+parseable: true
+quiet: true
+listrules: false

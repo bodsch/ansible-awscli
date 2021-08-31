@@ -1,0 +1,15 @@
+---
+
+awscli_version: 2.2.33
+
+awscli_download_url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64{{ '' if awscli_version == 'latest' else '-' + awscli_version }}.zip"
+awscli_archiv: "aws-cli{{ '' if awscli_version == 'latest' else '-' + awscli_version }}.zip"
+
+awscli_config: "config.j2"
+awscli_credentials: "credentials.j2"
+
+awscli_users: {}
+awscli_access_key_id: ""
+awscli_secret_access_key: ""
+
+...
