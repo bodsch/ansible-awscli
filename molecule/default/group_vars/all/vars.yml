@@ -1,5 +1,7 @@
 ---
 
+awscli_version: 2.4.15
+
 awscli_users:
   jenkins:
     profiles:

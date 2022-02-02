@@ -10,7 +10,6 @@
   register: awscli_installed_version
   check_mode: false
   ignore_errors: true
-  # changed_when: awscli_installed_version.msg == "no awscli installed"
 
 - name: create local tmp directory
   become: false
@@ -18,7 +17,7 @@
   file:
     path: "{{ awscli_local_tmp_directory }}"
     state: directory
-    mode: 0o750
+    mode: "0750"
   when:
     - awscli_versioned_installed is defined
     - not awscli_versioned_installed.stat.exists
@@ -26,6 +25,14 @@
 - name: define uninstall awscli
   set_fact:
     awscli_uninstall: "{{ awscli_installed_version.version.major is version_compare(awscli_version.split('.') | first, '<') }}"
+  when:
+    - awscli_installed_version is defined
+    - awscli_installed_version.version is defined
+    - awscli_installed_version.version.major is defined
+
+- name: define uninstall awscli
+  set_fact:
+    awscli_reinstall: "{{ awscli_installed_version.full_version is version_compare(awscli_version, '!=') }}"
   when:
     - awscli_installed_version is defined
     - awscli_installed_version.version is defined
@@ -39,5 +46,26 @@
   package:
     name: "{{ awscli_dependencies }}"
     state: present
+
+- name: python support
+  block:
+    - name: create requirements.txt
+      template:
+        src: requirements.txt.j2
+        dest: /tmp/awscli-requirements.txt
+        mode: "0660"
+
+    - name: ensure python dependecies for awscli are installed
+      pip:
+        requirements: /tmp/awscli-requirements.txt
+        state: present
+        executable: pip{{ '3' if ansible_python.version.major | int == 3 else '' }}
+      register: pip_install
+      # ignore_errors: true
+      # no_log: true
+
+  when:
+    - awscli_python_packages is defined
+    - awscli_python_packages | count > 0
 
 ...

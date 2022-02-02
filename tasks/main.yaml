@@ -6,27 +6,37 @@
     - awscli_configure
     - awscli_run
 
-- name: installed awscli version
-  debug:
-    msg: "{{ awscli_installed_version.full_version }}"
-  when:
-    - awscli_installed_version.rc == 0  #full_version is defined
-
 - import_tasks: download.yaml
   become: true
   tags:
     - awscli_install
   when:
-    - awscli_versioned_installed is defined
-    - not awscli_versioned_installed.stat.exists
+    - (awscli_versioned_installed is defined and
+      not awscli_versioned_installed.stat.exists) or
+      (awscli_reinstall is defined and
+      awscli_reinstall)
 
 - import_tasks: install.yaml
   become: true
   tags:
     - awscli_install
   when:
-    - awscli_versioned_installed is defined
-    - not awscli_versioned_installed.stat.exists
+    - (awscli_versioned_installed is defined and
+      not awscli_versioned_installed.stat.exists) or
+      (awscli_reinstall is defined and
+      awscli_reinstall)
+
+- name: verify installed aws-cli version
+  awscli_version:
+  register: awscli_installed_version
+  check_mode: false
+  ignore_errors: true
+
+- name: installed awscli version
+  debug:
+    msg: "{{ awscli_installed_version.full_version }}"
+  when:
+    - awscli_installed_version.rc == 0  #full_version is defined
 
 - import_tasks: configure.yaml
   become: true
