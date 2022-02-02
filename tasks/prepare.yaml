@@ -1,5 +1,46 @@
 ---
 
+- name: include OS specific configuration ({{ ansible_distribution }} ({{ ansible_os_family }}) {{ ansible_distribution_major_version }})
+  include_vars: "{{ lookup('first_found', params) }}"
+  vars:
+    params:
+      paths:
+        - "vars"
+      files:
+        # eg. debian-10 / ubuntu-20.04 / centos-8 / oraclelinux-8
+        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version }}.yml"
+        # eg. archlinux-systemd / archlinux-openrc
+        - "{{ ansible_distribution | lower }}-{{ ansible_service_mgr | lower }}.yml"
+        # eg. debian / ubuntu / centos / oraclelinux
+        - "{{ ansible_distribution | lower }}.yml"
+        # eg. redhat / debian / archlinux
+        - "{{ ansible_os_family | lower }}.yml"
+        - default.yaml
+      skip: true
+
+- block:
+    - name: make sure python3-apt is installed (only debian based)
+      package:
+        name:
+          - python3-apt
+        state: present
+      register: _installed
+
+    - name: clean apt cache
+      command: apt-get clean
+      args:
+        warn: false
+      when:
+        - _installed.changed
+
+    - name: update package cache
+      package:
+        update_cache: true
+      when:
+        - _installed.changed
+  when:
+    - ansible_os_family | lower == 'debian'
+
 - name: detect if awscli {{ awscli_version }} is already installed
   stat:
     path: "/usr/local/bin/aws_{{ awscli_version }}"
