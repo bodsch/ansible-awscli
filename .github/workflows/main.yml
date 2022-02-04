@@ -44,11 +44,10 @@ jobs:
         image:
           - archlinux:latest
         python-version:
-          - '3.8'
           - '3.9'
         ansible-version:
-          - '2.9'
-          - '2.10'
+          - '3.4.0'
+          - '5.1.0'
 
     steps:
       - name: check out the codebase.
@@ -86,13 +85,13 @@ jobs:
         image:
           - debian:9
           - debian:10
+          - debian:11
           - ubuntu:20.04
         python-version:
-          - '3.8'
           - '3.9'
         ansible-version:
-          - '2.9'
-          - '2.10'
+          - '3.4.0'
+          - '5.1.0'
 
     steps:
       - name: check out the codebase.
@@ -130,12 +129,13 @@ jobs:
         image:
           - centos:8
           - oraclelinux:8
+          - rocky:8
+          - almalinux:8
         python-version:
-          - '3.8'
           - '3.9'
         ansible-version:
-          - '2.9'
-          - '2.10'
+          - '3.4.0'
+          - '5.1.0'
 
     steps:
       - name: check out the codebase.
