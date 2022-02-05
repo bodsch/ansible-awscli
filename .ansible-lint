@@ -1,12 +1,14 @@
 ---
 skip_list:
-  - role-name
+#  - role-name
+  - inline-env-var
+  - no-changed-when
 
 exclude_paths:
   - .tox
   - .github
   - molecule
 
-parseable: true
-quiet: true
-listrules: false
+#parseable: true
+#quiet: true
+#listrules: false

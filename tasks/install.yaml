@@ -32,13 +32,14 @@
     dest: "/var/tmp"
     copy: false
 
-- name: install awscli {{ awscli_version }}
+- name: install awscli
   become: true
   command: /var/tmp/aws/install
   args:
     chdir: /var/tmp/aws/
     warn: false
-    #creates: /usr/local/bin/aws
+    changed_when: false
+    # creates: /usr/local/bin/aws
 
 - name: create version link to aws
   file:
