@@ -1,7 +1,3 @@
 ---
 
-awscli_dependencies:
-  - unzip
-  - python-pip
-
 ...

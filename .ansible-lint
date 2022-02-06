@@ -1,8 +1,8 @@
 ---
-skip_list:
+#skip_list:
 #  - role-name
-  - inline-env-var
-  - no-changed-when
+#  - inline-env-var
+#  - no-changed-when
 
 exclude_paths:
   - .tox

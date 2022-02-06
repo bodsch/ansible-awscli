@@ -14,6 +14,9 @@ awscli_dependencies:
 
 awscli_python_packages:
   - name: ec2-metadata
-    version: 2.7.0
+    version: 2.6.0
+  - name: boto3
+  - name: botocore
+  - name: s3transfer
 
 ...

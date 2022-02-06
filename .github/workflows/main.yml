@@ -83,7 +83,6 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - debian:9
           - debian:10
           - debian:11
           - ubuntu:20.04
@@ -127,9 +126,9 @@ jobs:
       fail-fast: false
       matrix:
         image:
-          - centos:8
+          # - centos:8
           - oraclelinux:8
-          - rocky:8
+          - rockylinux:8
           - almalinux:8
         python-version:
           - '3.9'
