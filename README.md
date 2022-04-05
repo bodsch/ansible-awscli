@@ -15,17 +15,20 @@ Ansible role to setup aws-cli tools.
 
 ## Requirements & Dependencies
 
- - running mariadb / mysql database
 
 ### Operating systems
 
 Tested on
 
-* Debian 9 / 10
-* Ubuntu 18.04 / 18.10 / 19.10
-* CentOS 7 / 8
-* Oracle Linux 8
 * Arch Linux
+* Debian based
+    - Debian 10 / 11
+    - Ubuntu 20.10
+* RedHat based
+    - ? CentOS 8 (**not longer supported**)
+    - ? Alma Linux 8
+    - ? Rocky Linux 8
+    - ? Oracle Linux 8
 
 ## usage
 
@@ -94,3 +97,24 @@ awscli_users:
 
 [Howto use AWS Named Profiles](https://docs.aws.amazon.com/cli/latest/userguide/cli-configure-profiles.html)
 
+
+## Contribution
+
+Please read [Contribution](CONTRIBUTING.md)
+
+## Development,  Branches (Git Tags)
+
+The `master` Branch is my *Working Horse* includes the "latest, hot shit" and can be complete broken!
+
+If you want to use something stable, please use a [Tagged Version](https://gitlab.com/bodsch/ansible-dovecot/-/tags)!
+
+
+## Author
+
+- Bodo Schulz
+
+## License
+
+[Apache](LICENSE)
+
+`FREE SOFTWARE, HELL YEAH!`

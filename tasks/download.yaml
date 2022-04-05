@@ -6,6 +6,7 @@
   get_url:
     url: "{{ awscli_download_url }}"
     dest: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
+    mode: 0640
   register: _download_archive
   until: _download_archive is succeeded
   retries: 5
@@ -16,7 +17,7 @@
   copy:
     src: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
     dest: "/tmp/{{ awscli_archiv }}"
-    mode: 0o755
+    mode: 0750
     owner: root
     group: root
 

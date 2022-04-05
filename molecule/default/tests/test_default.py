@@ -71,3 +71,33 @@ def test_directories(host, dirs):
 
     d = host.file(dirs)
     assert d.is_directory
+
+
+def test_user_configs(host, get_vars):
+    """
+    """
+    users = get_vars.get('awscli_users')
+
+    for u, values in users.items():
+        """
+        """
+        aws_profiles = values.get("profiles", {})
+
+        if len(aws_profiles) > 0:
+            """
+            """
+            home_dir = "/home/{}".format(u)
+
+            if values.get("home"):
+                home_dir = "{}/{}".format(values.get("home"), u)
+
+            config_dir = "{}/.aws".format(home_dir)
+
+            assert host.file(home_dir).is_directory
+            assert host.file(config_dir).is_directory
+
+            config_file = "{}/config".format(config_dir)
+            credentials_file = "{}/credentials".format(config_dir)
+
+            assert host.file(config_file).is_file
+            assert host.file(credentials_file).is_file
