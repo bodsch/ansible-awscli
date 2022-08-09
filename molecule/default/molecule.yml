@@ -31,13 +31,14 @@ platforms:
 
 provisioner:
   name: ansible
-  #ansible_args:
-  #  - --diff
+  ansible_args:
+    - --diff
   #   - -v
   config_options:
     defaults:
       deprecation_warnings: True
       stdout_callback: yaml
+      callbacks_enabled: profile_tasks
       # remote_tmp: /tmp/ansible-${USER}
 
 scenario:
