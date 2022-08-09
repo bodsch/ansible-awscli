@@ -78,7 +78,7 @@ jobs:
     name: "${{ matrix.image }} / ansible: ${{ matrix.ansible-version }}, szenario: ${{ matrix.scenario }}"
     needs:
       - lint
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
@@ -121,7 +121,7 @@ jobs:
     name: "${{ matrix.image }} / ansible: ${{ matrix.ansible-version }}, szenario: ${{ matrix.scenario }}"
     needs:
       - lint
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     strategy:
       fail-fast: false
       matrix:
@@ -165,7 +165,7 @@ jobs:
     needs:
       - arch
       - deb
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-20.04
     steps:
       - name: galaxy
         uses: robertdebock/galaxy-action@1.2.0
