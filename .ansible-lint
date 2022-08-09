@@ -1,15 +1,4 @@
----
+
 skip_list:
-  - fqcn-builtins
-#  - role-name
-#  - inline-env-var
-#  - no-changed-when
-
-exclude_paths:
-  - .tox
-  - .github
-  - molecule
-
-#parseable: true
-#quiet: true
-#listrules: false
+  - role-name          # Role name {} does not match ``^[a-z][a-z0-9_]+$`` pattern
+  - yaml               # Violations reported by yamllint
