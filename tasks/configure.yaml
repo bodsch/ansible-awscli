@@ -7,7 +7,7 @@
     owner: "{{ item.key }}"
     group: "{{ item.value.group | default(item.key) }}"
     state: directory
-    mode: 0o700
+    mode: 0700
     force: false
   loop: "{{ awscli_users | dict2items }}"
   loop_control:
@@ -20,7 +20,7 @@
     dest: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws/config"
     owner: "{{ item.key }}"
     group: "{{ item.value.group | default(item.key) }}"
-    mode: 0o600
+    mode: 0600
     force: true
   loop: "{{ awscli_users | dict2items }}"
   loop_control:
@@ -36,7 +36,7 @@
     dest: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws/credentials"
     owner: "{{ item.key }}"
     group: "{{ item.value.group | default(item.key) }}"
-    mode: 0o600
+    mode: 0600
     force: true
   loop: "{{ awscli_users | dict2items }}"
   loop_control:

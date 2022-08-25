@@ -21,6 +21,7 @@ class AwsCliVersion(object):
         """
         self.module = module
 
+        self.validate_version = module.params.get("validate_version")
         self.awscli = module.get_bin_path('aws', False)
 
     def run(self):
@@ -35,12 +36,19 @@ class AwsCliVersion(object):
         )
 
         if not self.awscli:
-            result["msg"] = "no awscli installed"
-            return result
+            return dict(
+                rc=0,
+                failed=False,
+                changed=False,
+                msg = "no awscli installed"
+            )
 
         rc, out, err = self._exec(['--version'])
 
         if rc == 0:
+            _failed = True
+            msg = "unknown message"
+
             pattern = re.compile(r"^aws-cli\/(?P<version>(?P<major>\d+).(?P<minor>\d+).(?P<patch>\*|\d+)).*")
             version = re.search(pattern, out)
             if version:
@@ -49,9 +57,18 @@ class AwsCliVersion(object):
                 version_minor_string = version.group("minor")
                 version_patch_string = version.group("patch")
 
+            if self.validate_version:
+                if version_full_string == self.validate_version:
+                    _failed = False
+                    msg = f"version {self.validate_version} successful installed."
+                else:
+                    _failed = True
+                    msg = f"version {self.validate_version} not installed."
+
             result = dict(
-                failed = False,
+                failed = _failed,
                 rc = 0,
+                msg=msg,
                 full_version = version_full_string,
                 version = dict(
                     major = int(version_major_string),
@@ -83,6 +100,10 @@ def main():
 
     module = AnsibleModule(
         argument_spec=dict(
+            validate_version=dict(
+                required=False,
+                type="str"
+            )
         ),
         supports_check_mode=True,
     )

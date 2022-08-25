@@ -15,10 +15,45 @@
         - "{{ ansible_distribution | lower }}.yml"
         # eg. redhat / debian / archlinux
         - "{{ ansible_os_family | lower }}.yml"
+        # artixlinux
+        - "{{ ansible_os_family | lower | replace(' ', '') }}.yml"
         - default.yaml
       skip: true
 
-- block:
+- name: define delegate instance for download handling
+  set_fact:
+    awscli_delegate_to: "{{ ansible_host }}"
+    awscli_local_tmp_directory: "{{
+        lookup('env', 'CUSTOM_LOCAL_TMP_DIRECTORY') |
+        default('/var/cache/ansible/awscli', true) }}/{{ awscli_version }}"
+  when:
+    - awscli_direct_download
+
+- name: get latest tags
+  block:
+    - name: get github tags
+      uri:
+        url: "https://api.github.com/repos/aws/aws-cli/tags"
+        method: GET
+        return_content: true
+        status_code: 200
+        body_format: json
+        validate_certs: false
+        user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
+        password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
+      # no_log: "{{ not lookup('env', 'ANSIBLE_DEBUG') | bool }}"
+      register: _github_tag
+      until: _github_tag.status == 200
+      retries: 5
+
+    - name: set awscli version to {{ _github_tag.json.tag_name[1:] }}
+      set_fact:
+        awscli_version: "{{ _github_tag.json.tag_name[1:] }}"
+  when:
+    - awscli_version == "latest"
+
+- name: install python3-apt
+  block:
     - name: make sure python3-apt is installed (only debian based)
       package:
         name:
@@ -41,20 +76,21 @@
   when:
     - ansible_os_family | lower == 'debian'
 
-- name: detect if awscli {{ awscli_version }} is already installed
+- name: detect if awscli {{ awscli_version }} is present
   stat:
     path: "/usr/local/bin/aws_{{ awscli_version }}"
   register: awscli_versioned_installed
 
-- name: detect installed aws-cli version
+- name: define installed aws-cli version
   awscli_version:
+    validate_version: "{{ awscli_version }}"
   register: awscli_installed_version
   check_mode: false
   ignore_errors: true
 
-- name: create local tmp directory
+- name: create download directory
   become: false
-  delegate_to: 127.0.0.1
+  delegate_to: "{{ awscli_delegate_to }}"
   file:
     path: "{{ awscli_local_tmp_directory }}"
     state: directory
@@ -71,7 +107,7 @@
     - awscli_installed_version.version is defined
     - awscli_installed_version.version.major is defined
 
-- name: define uninstall awscli
+- name: define reinstall awscli
   set_fact:
     awscli_reinstall: "{{ awscli_installed_version.full_version is version_compare(awscli_version, '!=') }}"
   when:

@@ -1,12 +1,14 @@
 ---
 
-- import_tasks: prepare.yaml
+- name: prepare
+  import_tasks: prepare.yaml
   tags:
     - awscli_install
     - awscli_configure
     - awscli_run
 
-- import_tasks: download.yaml
+- name: download
+  import_tasks: download.yaml
   become: true
   tags:
     - awscli_install
@@ -16,7 +18,8 @@
       (awscli_reinstall is defined and
       awscli_reinstall)
 
-- import_tasks: install.yaml
+- name: install
+  import_tasks: install.yaml
   become: true
   tags:
     - awscli_install
@@ -26,19 +29,23 @@
       (awscli_reinstall is defined and
       awscli_reinstall)
 
-- name: verify installed aws-cli version
-  awscli_version:
-  register: awscli_installed_version
-  check_mode: false
-  ignore_errors: true
+- name: verify installation
+  block:
+    - name: verify installed aws-cli version
+      awscli_version:
+        validate_version: "{{ awscli_version }}"
+      register: awscli_installed_version
+      check_mode: false
+      ignore_errors: true
 
-- name: installed awscli version
-  debug:
-    msg: "{{ awscli_installed_version.full_version }}"
-  when:
-    - awscli_installed_version.rc == 0  #full_version is defined
+    - name: installed awscli version
+      debug:
+        msg: "{{ awscli_installed_version.msg }}"
+      when:
+        - awscli_installed_version.rc == 0
 
-- import_tasks: configure.yaml
+- name: configure
+  import_tasks: configure.yaml
   become: true
   tags:
     - awscli_configure

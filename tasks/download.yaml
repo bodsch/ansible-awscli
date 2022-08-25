@@ -2,7 +2,7 @@
 
 - name: download awscli archiv to local folder
   become: false
-  delegate_to: 127.0.0.1
+  delegate_to: "{{ awscli_delegate_to }}"
   get_url:
     url: "{{ awscli_download_url }}"
     dest: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
@@ -20,5 +20,6 @@
     mode: 0750
     owner: root
     group: root
+    remote_src: "{{ 'true' if awscli_direct_download else 'false' }}"
 
 ...
