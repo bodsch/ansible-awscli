@@ -1,5 +1,5 @@
 ---
-name: CI
+name: update awscli
 
 on:
   schedule:
