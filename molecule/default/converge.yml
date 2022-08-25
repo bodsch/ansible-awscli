@@ -1,4 +1,5 @@
 ---
+
 - name: converge
   hosts: all
   any_errors_fatal: false
@@ -9,3 +10,4 @@
   roles:
     - role: ansible-awscli
 
+...
