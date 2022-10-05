@@ -30,6 +30,9 @@
     - awscli_direct_download
 
 - name: get latest tags
+  become: false
+  delegate_to: localhost
+  run_once: true
   block:
     - name: get github tags
       uri:
@@ -46,13 +49,14 @@
       until: _github_tag.status == 200
       retries: 5
 
-    - name: set awscli version to {{ _github_tag.json.tag_name[1:] }}
+    - name: set awscli version to {{ _github_tag.json | awscli_version | last }}
       set_fact:
-        awscli_version: "{{ _github_tag.json.tag_name[1:] }}"
+        awscli_version: "{{ _github_tag.json | awscli_version | last }}"
   when:
     - awscli_version == "latest"
 
 - name: install python3-apt
+  become: true
   block:
     - name: make sure python3-apt is installed (only debian based)
       package:
@@ -116,13 +120,17 @@
     - awscli_installed_version.version.major is defined
 
 - name: update package cache
+  become: true
   package:
     update_cache: true
 
 - name: install dependencies
+  become: true
   package:
     name: "{{ awscli_dependencies }}"
     state: present
+  when:
+    - awscli_dependencies | default([]) | count > 0
 
 - name: python support
   block:
@@ -136,11 +144,8 @@
       pip:
         requirements: /tmp/awscli-requirements.txt
         state: present
-        executable: pip{{ '3' if ansible_python.version.major | int == 3 else '' }}
+        # executable: pip{{ '3' if ansible_python.version.major | int == 3 else '' }}
       register: pip_install
-      # ignore_errors: true
-      # no_log: true
-
   when:
     - awscli_python_packages is defined
     - awscli_python_packages | count > 0
