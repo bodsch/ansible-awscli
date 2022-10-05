@@ -3,10 +3,6 @@
 from __future__ import (absolute_import, print_function)
 __metaclass__ = type
 
-import os
-import re
-import json
-import base64
 from packaging.version import parse as parseVersion
 
 from ansible.utils.display import Display
@@ -41,10 +37,9 @@ class FilterModule(object):
 
         return versions
 
-
-    def __version_sort(self, l):
+    def __version_sort(self, versions_list):
         """
         """
-        l.sort(key = parseVersion)
+        versions_list.sort(key = parseVersion)
 
-        return l
+        return versions_list
