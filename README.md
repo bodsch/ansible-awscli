@@ -15,6 +15,19 @@ Ansible role to setup aws-cli tools.
 [quality]: https://galaxy.ansible.com/bodsch/awscli
 
 
+If `latest` is set for `awscli_version`, the role tries to install the latest release version.  
+**Please use this with caution, as incompatibilities between releases may occur!**
+
+The binaries are installed below `/usr/local/bin/aws_${awscli_version}` and later linked to `/usr/local/bin/aws`. 
+This should make it possible to downgrade relatively safely.
+
+The AWSCLI archive is stored on the Ansible controller and is later copied to the target system.
+The cache directory can be defined via the environment variable `CUSTOM_LOCAL_TMP_DIRECTORY`. 
+By default it is `${HOME}/.cache/ansible/awscli`.
+If this type of installation is not desired, the download can take place directly on the target system. 
+However, this must be explicitly activated by setting `awscli_direct_download` to `true`.
+
+
 ## Requirements & Dependencies
 
 There are no known dependencies.
@@ -49,6 +62,8 @@ awscli_version: 2.2.33
 
 awscli_download_url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64{{ '' if awscli_version == 'latest' else '-' + awscli_version }}.zip"
 awscli_archiv: "aws-cli{{ '' if awscli_version == 'latest' else '-' + awscli_version }}.zip"
+
+awscli_direct_download: false
 
 awscli_config: "config.j2"
 awscli_credentials: "credentials.j2"

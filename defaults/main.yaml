@@ -11,7 +11,5 @@ awscli_config: "config.j2"
 awscli_credentials: "credentials.j2"
 
 awscli_users: {}
-awscli_access_key_id: ""
-awscli_secret_access_key: ""
 
 ...
