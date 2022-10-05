@@ -1,0 +1,21 @@
+---
+
+awscli_version: latest
+
+awscli_users:
+  jenkins:
+    profiles:
+      default:
+        region: "eu-central-1"
+        output: "json"
+        access_key_id: "molecule-aws-access-key-id"
+        secret_access_key: "molecule-aws-secret-access-key"
+      us-west:
+        region: "us-west-1"
+        access_key_id: "molecule-aws-access-key-id_2"
+        secret_access_key: "molecule-aws-secret-access-key_2"
+    home: "/var/lib"
+    group: "jenkins"
+  molecule: {}
+
+...
