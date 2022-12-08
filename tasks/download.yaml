@@ -3,7 +3,7 @@
 - name: download awscli archiv to local folder
   become: false
   delegate_to: "{{ awscli_delegate_to }}"
-  get_url:
+  ansible.builtin.get_url:
     url: "{{ awscli_download_url }}"
     dest: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
     mode: 0640
@@ -14,7 +14,7 @@
   check_mode: false
 
 - name: propagate awscli
-  copy:
+  ansible.builtin.copy:
     src: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
     dest: "/tmp/{{ awscli_archiv }}"
     mode: 0750

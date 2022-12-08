@@ -1,14 +1,14 @@
 ---
 
 - name: prepare
-  import_tasks: prepare.yaml
+  ansible.builtin.import_tasks: prepare.yaml
   tags:
     - awscli_install
     - awscli_configure
     - awscli_run
 
 - name: download
-  import_tasks: download.yaml
+  ansible.builtin.import_tasks: download.yaml
   become: true
   tags:
     - awscli_install
@@ -19,7 +19,7 @@
       awscli_reinstall)
 
 - name: install
-  import_tasks: install.yaml
+  ansible.builtin.import_tasks: install.yaml
   become: true
   tags:
     - awscli_install
@@ -39,13 +39,13 @@
       ignore_errors: true
 
     - name: installed awscli version
-      debug:
+      ansible.builtin.debug:
         msg: "{{ awscli_installed_version.msg }}"
       when:
         - awscli_installed_version.rc == 0
 
 - name: configure
-  import_tasks: configure.yaml
+  ansible.builtin.import_tasks: configure.yaml
   become: true
   tags:
     - awscli_configure

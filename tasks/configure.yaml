@@ -2,7 +2,7 @@
 
 - name: create ~/.aws directory
   become: true
-  file:
+  ansible.builtin.file:
     path: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws"
     owner: "{{ item.key }}"
     group: "{{ item.value.group | default(item.key) }}"
@@ -15,7 +15,7 @@
 
 - name: create AWS CLI config file
   become: true
-  template:
+  ansible.builtin.template:
     src: "{{ awscli_config }}"
     dest: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws/config"
     owner: "{{ item.key }}"
@@ -31,7 +31,7 @@
 - name: create AWS CLI credentials file
   become: true
   no_log: true
-  template:
+  ansible.builtin.template:
     src: "{{ awscli_credentials }}"
     dest: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws/credentials"
     owner: "{{ item.key }}"

@@ -1,7 +1,7 @@
 ---
 
 - name: include OS specific configuration ({{ ansible_distribution }} ({{ ansible_os_family }}) {{ ansible_distribution_major_version }})
-  include_vars: "{{ lookup('first_found', params) }}"
+  ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
   vars:
     params:
       paths:
@@ -21,7 +21,7 @@
       skip: true
 
 - name: define delegate instance for download handling
-  set_fact:
+  ansible.builtin.set_fact:
     awscli_delegate_to: "{{ ansible_host }}"
     awscli_local_tmp_directory: "{{
         lookup('env', 'CUSTOM_LOCAL_TMP_DIRECTORY') |
@@ -30,12 +30,14 @@
     - awscli_direct_download
 
 - name: get latest tags
+  when:
+    - awscli_version == "latest"
   become: false
   delegate_to: localhost
   run_once: true
   block:
     - name: get github tags
-      uri:
+      ansible.builtin.uri:
         url: "https://api.github.com/repos/aws/aws-cli/tags"
         method: GET
         return_content: true
@@ -50,38 +52,36 @@
       retries: 5
 
     - name: set awscli version to {{ _github_tag.json | awscli_version | last }}
-      set_fact:
+      ansible.builtin.set_fact:
         awscli_version: "{{ _github_tag.json | awscli_version | last }}"
-  when:
-    - awscli_version == "latest"
 
 - name: install python3-apt
+  when:
+    - ansible_os_family | lower == 'debian'
   become: true
   block:
     - name: make sure python3-apt is installed (only debian based)
-      package:
+      ansible.builtin.package:
         name:
           - python3-apt
         state: present
       register: _installed
 
     - name: clean apt cache
-      command: apt-get clean
+      ansible.builtin.command: apt-get clean
       args:
         warn: false
       when:
         - _installed.changed
 
     - name: update package cache
-      package:
+      ansible.builtin.package:
         update_cache: true
       when:
         - _installed.changed
-  when:
-    - ansible_os_family | lower == 'debian'
 
 - name: detect if awscli {{ awscli_version }} is present
-  stat:
+  ansible.builtin.stat:
     path: "/usr/local/bin/aws_{{ awscli_version }}"
   register: awscli_versioned_installed
 
@@ -95,7 +95,7 @@
 - name: create download directory
   become: false
   delegate_to: "{{ awscli_delegate_to }}"
-  file:
+  ansible.builtin.file:
     path: "{{ awscli_local_tmp_directory }}"
     state: directory
     mode: "0750"
@@ -104,7 +104,7 @@
     - not awscli_versioned_installed.stat.exists
 
 - name: define uninstall awscli
-  set_fact:
+  ansible.builtin.set_fact:
     awscli_uninstall: "{{ awscli_installed_version.version.major is version_compare(awscli_version.split('.') | first, '<') }}"
   when:
     - awscli_installed_version is defined
@@ -112,7 +112,7 @@
     - awscli_installed_version.version.major is defined
 
 - name: define reinstall awscli
-  set_fact:
+  ansible.builtin.set_fact:
     awscli_reinstall: "{{ awscli_installed_version.full_version is version_compare(awscli_version, '!=') }}"
   when:
     - awscli_installed_version is defined
@@ -121,33 +121,32 @@
 
 - name: update package cache
   become: true
-  package:
+  ansible.builtin.package:
     update_cache: true
 
 - name: install dependencies
   become: true
-  package:
+  ansible.builtin.package:
     name: "{{ awscli_dependencies }}"
     state: present
   when:
     - awscli_dependencies | default([]) | count > 0
 
 - name: python support
+  when:
+    - awscli_python_packages is defined
+    - awscli_python_packages | count > 0
   block:
     - name: create requirements.txt
-      template:
+      ansible.builtin.template:
         src: requirements.txt.j2
         dest: /tmp/awscli-requirements.txt
         mode: "0660"
 
     - name: ensure python dependecies for awscli are installed
-      pip:
+      ansible.builtin.pip:
         requirements: /tmp/awscli-requirements.txt
         state: present
-        # executable: pip{{ '3' if ansible_python.version.major | int == 3 else '' }}
       register: pip_install
-  when:
-    - awscli_python_packages is defined
-    - awscli_python_packages | count > 0
 
 ...

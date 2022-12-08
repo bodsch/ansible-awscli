@@ -1,7 +1,7 @@
 ---
 
 - name: "uninstall installed awscli version {{ awscli_installed_version.full_version }}"
-  package:
+  ansible.builtin.package:
     name: awscli
     state: absent
   when:
@@ -11,51 +11,50 @@
     - awscli_installed_version.version.major | int == 1
 
 - name: remove old awscli version
-  block:
-    - name: remove old awscli version {{ awscli_installed_version.full_version }}
-      file:
-        state: absent
-        path: /usr/local/aws-cli
-
-    - name: remove old version link to aws
-      file:
-        state: absent
-        path: "/usr/local/bin/aws_{{ awscli_installed_version.full_version }}"
   when:
     - awscli_reinstall is defined
     - awscli_reinstall
     - awscli_installed_version is defined
     - awscli_installed_version.full_version is defined
+  block:
+    - name: remove old awscli version {{ awscli_installed_version.full_version }}
+      ansible.builtin.file:
+        state: absent
+        path: /usr/local/aws-cli
+
+    - name: remove old version link to aws
+      ansible.builtin.file:
+        state: absent
+        path: "/usr/local/bin/aws_{{ awscli_installed_version.full_version }}"
 
 - name: extract awscli archive
-  unarchive:
+  ansible.builtin.unarchive:
     src: "/tmp/{{ awscli_archiv }}"
     dest: "/var/tmp"
     copy: false
 
 - name: install awscli
   become: true
-  command: /var/tmp/aws/install
+  ansible.builtin.command: /var/tmp/aws/install
   args:
     chdir: /var/tmp/aws/
-    warn: false
   changed_when: false
   # creates: /usr/local/bin/aws
 
 - name: create version link to aws
-  file:
+  ansible.builtin.file:
     src: "/usr/local/bin/aws"
     dest: "/usr/local/bin/aws_{{ awscli_version }}"
     state: link
     force: true
 
 - name: remove awscli archive
-  file:
+  ansible.builtin.file:
     path: "/tmp/{{ awscli_archiv }}"
     state: absent
 
 - name: remove temporary awscli install files
-  file:
+  ansible.builtin.file:
     path: "/var/tmp/aws"
     state: absent
 
