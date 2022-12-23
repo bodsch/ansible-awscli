@@ -4,7 +4,7 @@
 Ansible role to setup aws-cli tools.
 
 
-[![GitHub Workflow Status](https://img.shields.io/github/workflow/status/bodsch/ansible-awscli/CI)][ci]
+[![GitHub Workflow Status](https://img.shields.io/github/actions/workflow/status/bodsch/ansible-awscli/main.yml?branch=main)][ci]
 [![GitHub issues](https://img.shields.io/github/issues/bodsch/ansible-awscli)][issues]
 [![GitHub release (latest by date)](https://img.shields.io/github/v/release/bodsch/ansible-awscli)][releases]
 [![Ansible Quality Score](https://img.shields.io/ansible/quality/50067?label=role%20quality)][quality]
