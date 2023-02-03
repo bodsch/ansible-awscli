@@ -39,7 +39,6 @@
   args:
     chdir: /var/tmp/aws/
   changed_when: false
-  # creates: /usr/local/bin/aws
 
 - name: create version link to aws
   ansible.builtin.file:

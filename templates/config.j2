@@ -1,14 +1,16 @@
+#jinja2: trim_blocks: True, lstrip_blocks: True
+# {{ ansible_managed }}
 {% for key,  value in item.items() %}
-{% if value | type == 'dict' %}
-{% for k, v in value.profiles.items() %}
-{% if k == 'default' %}
+  {% if value | type == 'dict' %}
+    {% for k, v in value.profiles.items() %}
+      {% if k == 'default' %}
 [{{ k }}]
-{% else %}
+      {% else %}
 [profile {{ k }}]
-{% endif %}
+      {% endif %}
 region = {{ v.region | default('eu-central-1') }}
 output = {{ v.output | default('text') }}
 
-{% endfor %}
-{% endif %}
+    {% endfor %}
+  {% endif %}
 {% endfor %}
