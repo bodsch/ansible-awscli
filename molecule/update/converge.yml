@@ -14,7 +14,7 @@
   any_errors_fatal: false
 
   vars:
-    awscli_version: 2.7.26
+    awscli_version: latest
 
   environment:
     NETRC: ''

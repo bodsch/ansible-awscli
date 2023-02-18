@@ -47,6 +47,12 @@
     state: link
     force: true
 
+- name: create local facts
+  ansible.builtin.template:
+    src: ansible_facts.j2
+    dest: /etc/ansible/facts.d/aws_cli.fact
+    mode: 0755
+
 - name: remove awscli archive
   ansible.builtin.file:
     path: "/tmp/{{ awscli_archiv }}"

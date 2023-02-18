@@ -36,29 +36,25 @@
   delegate_to: localhost
   run_once: true
   block:
-    - name: get github tags
-      ansible.builtin.uri:
-        url: "https://api.github.com/repos/aws/aws-cli/tags"
-        method: GET
-        return_content: true
-        status_code: 200
-        body_format: json
-        validate_certs: false
+    - name: get latest release
+      delegate_to: localhost
+      become: false
+      run_once: true
+      github_latest:
+        project: aws
+        repository: aws-cli
+        github_tags: true
         user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
         password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
-      # no_log: "{{ not lookup('env', 'ANSIBLE_DEBUG') | bool }}"
-      register: _github_tag
-      until: _github_tag.status == 200
-      retries: 5
+      register: _latest_release
 
-    - name: set awscli version to {{ _github_tag.json | awscli_version | last }}
+    - name: re-define awscli_version
       ansible.builtin.set_fact:
-        awscli_version: "{{ _github_tag.json | awscli_version | last }}"
+        awscli_version: "{{ _latest_release.latest_release }}"
 
-- name: install python3-apt
+- name: python3-apt for debian
   when:
     - ansible_os_family | lower == 'debian'
-  become: true
   block:
     - name: make sure python3-apt is installed (only debian based)
       ansible.builtin.package:
@@ -67,18 +63,22 @@
         state: present
       register: _installed
 
-    - name: clean apt cache
-      ansible.builtin.command: apt-get clean
-      args:
-        warn: false
+    - name: update apt cache
       when:
         - _installed.changed
+      block:
+        - name: clean apt cache  # noqa command-instead-of-module
+          ansible.builtin.command: |
+            apt-get clean
+          register: apt_clean
+          changed_when: apt_clean.rc != 0
+          failed_when: apt_clean.rc != 0
+          when: "ansible_version.full is version_compare('2.13', '<')"
 
-    - name: update package cache
-      ansible.builtin.package:
-        update_cache: true
-      when:
-        - _installed.changed
+        - name: clean apt cache
+          ansible.builtin.apt:
+            clean: true
+          when: "ansible_version.full is version_compare('2.13', '>=')"
 
 - name: detect if awscli {{ awscli_version }} is present
   ansible.builtin.stat:
@@ -148,5 +148,13 @@
         requirements: /tmp/awscli-requirements.txt
         state: present
       register: pip_install
+
+- name: create ansible local facts directory
+  ansible.builtin.file:
+    dest: /etc/ansible/facts.d
+    state: directory
+    owner: root
+    group: root
+    mode: 0775
 
 ...
