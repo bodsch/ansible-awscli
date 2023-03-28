@@ -67,7 +67,7 @@
       when:
         - _installed.changed
       block:
-        - name: clean apt cache  # noqa command-instead-of-module
+        - name: clean apt cache  # noqa command-instead-of-module no-handler
           ansible.builtin.command: |
             apt-get clean
           register: apt_clean
@@ -75,7 +75,7 @@
           failed_when: apt_clean.rc != 0
           when: "ansible_version.full is version_compare('2.13', '<')"
 
-        - name: clean apt cache
+        - name: clean apt cache  # noqa args[module]
           ansible.builtin.apt:
             clean: true
           when: "ansible_version.full is version_compare('2.13', '>=')"
