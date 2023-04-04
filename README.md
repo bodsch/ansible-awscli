@@ -30,13 +30,24 @@ However, this must be explicitly activated by setting `awscli_direct_download` t
 
 ## Requirements & Dependencies
 
-There are no known dependencies.
+Ansible Collections
+
+- [bodsch.core](https://github.com/bodsch/ansible-collection-core)
+- [bodsch.scm](https://github.com/bodsch/ansible-collection-scm)
+
+```bash
+ansible-galaxy collection install bodsch.core
+ansible-galaxy collection install bodsch.scm
+```
+or
+```bash
+ansible-galaxy collection install --requirements-file collections.yml
+```
 
 ## Latest `awscli` Version
 
 Currently there is only one old (2.0.0) release.  
 But current tags can be verified at [GitHub](https://github.com/aws/aws-cli/tags).
-
 
 
 ### Operating systems
@@ -55,7 +66,6 @@ Tested on
     - ? Oracle Linux 8
 
 ## usage
-
 
 ```yaml
 awscli_version: 2.2.33
@@ -103,7 +113,6 @@ aws_access_key_id = molecule-aws-access-key-id_2
 aws_secret_access_key = molecule-aws-secret-access-key_2
 ```
 
-
 ```yaml
 awscli_users:
   jenkins:
@@ -143,4 +152,4 @@ If you want to use something stable, please use a [Tagged Version](https://githu
 
 [Apache](LICENSE)
 
-`FREE SOFTWARE, HELL YEAH!`
+**FREE SOFTWARE, HELL YEAH!**

@@ -40,7 +40,7 @@
       delegate_to: localhost
       become: false
       run_once: true
-      github_latest:
+      bodsch.scm.github_latest:
         project: aws
         repository: aws-cli
         github_tags: true
@@ -80,6 +80,9 @@
             clean: true
           when: "ansible_version.full is version_compare('2.13', '>=')"
 
+- name: update facts to get latest information
+  ansible.builtin.setup:
+
 - name: detect if awscli {{ awscli_version }} is present
   ansible.builtin.stat:
     path: "/usr/local/bin/aws_{{ awscli_version }}"
@@ -91,6 +94,30 @@
   register: awscli_installed_version
   check_mode: false
   ignore_errors: true
+
+- name: define checksum
+  when:
+    - awscli_versioned_installed.stat.exists
+  block:
+    - name: detect checksum for awscli {{ awscli_version }}
+      ansible.builtin.stat:
+        path: /usr/local/aws-cli/v2/current/dist/aws
+      register: stat_awscli_binary
+      ignore_errors: true
+
+    - name: define local fact for awscli
+      ansible.builtin.set_fact:
+        awscli_checksum: "{{ ansible_local.aws_cli.checksum }}"
+      when:
+        - ansible_local.aws_cli.checksum is defined
+        - ansible_local.aws_cli.checksum | default('') | length > 0
+
+    - name: define awscli download
+      ansible.builtin.set_fact:
+        awscli_download: false
+      when:
+        - (awscli_checksum | string | length != 0) or
+          (awscli_checksum == stat_awscli_binary.stat.checksum)
 
 - name: create download directory
   become: false

@@ -2,9 +2,6 @@
 name: CI
 
 on:
-  schedule:
-    - cron: "0 4 * * 0"
-  workflow_dispatch:
   workflow_run:
     workflows:
       - "code linter"
@@ -16,7 +13,6 @@ defaults:
     working-directory: 'ansible-awscli'
 
 jobs:
-
   arch:
     name: "${{ matrix.image }} / ansible: ${{ matrix.ansible-version }}"
     runs-on: ubuntu-20.04
@@ -52,8 +48,11 @@ jobs:
 
       - name: test with tox
         run: |
-          tox -e ansible_$(printf "${{ matrix.ansible-version }}") \
-            -- molecule test --scenario-name default
+          make \
+            test \
+            -e TOX_SCENARIO="${{ matrix.scenario }}" \
+            -e TOX_ANSIBLE="ansible_${{ matrix.ansible-version }}" \
+            -e DISTRIBUTION="${{ matrix.image }}"
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
@@ -94,8 +93,11 @@ jobs:
 
       - name: test with tox
         run: |
-          tox -e ansible_$(printf "${{ matrix.ansible-version }}") \
-            -- molecule test --scenario-name default
+          make \
+            test \
+            -e TOX_SCENARIO="${{ matrix.scenario }}" \
+            -e TOX_ANSIBLE="ansible_${{ matrix.ansible-version }}" \
+            -e DISTRIBUTION="${{ matrix.image }}"
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'
@@ -137,8 +139,11 @@ jobs:
 
       - name: test with tox
         run: |
-          tox -e ansible_$(printf "${{ matrix.ansible-version }}") \
-            -- molecule test --scenario-name default
+          make \
+            test \
+            -e TOX_SCENARIO="${{ matrix.scenario }}" \
+            -e TOX_ANSIBLE="ansible_${{ matrix.ansible-version }}" \
+            -e DISTRIBUTION="${{ matrix.image }}"
         env:
           PY_COLORS: '1'
           ANSIBLE_FORCE_COLOR: '1'

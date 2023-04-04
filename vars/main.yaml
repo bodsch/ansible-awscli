@@ -21,4 +21,8 @@ awscli_python_packages:
   - name: botocore
   - name: s3transfer
 
+awscli_checksum: ""
+awscli_download: true
+awscli_reinstall: false
+
 ...

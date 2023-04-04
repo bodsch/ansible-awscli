@@ -143,18 +143,18 @@ def test_user_configs(host, get_vars):
         if len(aws_profiles) > 0:
             """
             """
-            home_dir = "/home/{}".format(u)
+            home_dir = f"/home/{u}"
 
             if values.get("home"):
-                home_dir = "{}/{}".format(values.get("home"), u)
+                home_dir = f"{values.get('home')}/{u}"
 
-            config_dir = "{}/.aws".format(home_dir)
+            config_dir = f"{home_dir}/.aws"
 
             assert host.file(home_dir).is_directory
             assert host.file(config_dir).is_directory
 
-            config_file = "{}/config".format(config_dir)
-            credentials_file = "{}/credentials".format(config_dir)
+            config_file = f"{config_dir}/config"
+            credentials_file = f"{config_dir}/credentials"
 
             assert host.file(config_file).is_file
             assert host.file(credentials_file).is_file

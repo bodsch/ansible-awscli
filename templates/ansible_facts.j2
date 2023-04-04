@@ -2,6 +2,7 @@
 # {{ ansible_managed }}
 cat <<EOF
 {
-  "version": "{{ awscli_version }}"
+  "version": "{{ awscli_version }}",
+  "checksum": "{{ awscli_checksum }}"
 }
 EOF

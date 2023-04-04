@@ -21,6 +21,7 @@
       ansible.builtin.file:
         state: absent
         path: /usr/local/aws-cli
+      no_log: true
 
     - name: remove old version link to aws
       ansible.builtin.file:
@@ -32,6 +33,7 @@
     src: "/tmp/{{ awscli_archiv }}"
     dest: "/var/tmp"
     copy: false
+  no_log: true
 
 - name: install awscli
   become: true
@@ -47,6 +49,20 @@
     state: link
     force: true
 
+- name: detect the installed binary
+  ansible.builtin.stat:
+    path: /usr/local/aws-cli/v2/current/dist/aws
+  register: stat_awscli_binary
+  ignore_errors: true
+
+- name: define awscli binary checksum
+  ansible.builtin.set_fact:
+    awscli_checksum: "{{ stat_awscli_binary.stat.checksum }}"
+  when:
+    - stat_awscli_binary is defined
+    - stat_awscli_binary.stat is defined
+    - stat_awscli_binary.stat.checksum is defined
+
 - name: create local facts
   ansible.builtin.template:
     src: ansible_facts.j2
@@ -57,10 +73,12 @@
   ansible.builtin.file:
     path: "/tmp/{{ awscli_archiv }}"
     state: absent
+  no_log: true
 
 - name: remove temporary awscli install files
   ansible.builtin.file:
     path: "/var/tmp/aws"
     state: absent
+  no_log: true
 
 ...

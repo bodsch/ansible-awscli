@@ -13,10 +13,7 @@
   tags:
     - awscli_install
   when:
-    - (awscli_versioned_installed is defined and
-      not awscli_versioned_installed.stat.exists) or
-      (awscli_reinstall is defined and
-      awscli_reinstall)
+    - awscli_download or awscli_reinstall
 
 - name: install
   ansible.builtin.import_tasks: install.yaml
@@ -24,10 +21,7 @@
   tags:
     - awscli_install
   when:
-    - (awscli_versioned_installed is defined and
-      not awscli_versioned_installed.stat.exists) or
-      (awscli_reinstall is defined and
-      awscli_reinstall)
+    - awscli_download or awscli_reinstall
 
 - name: verify installation
   block:
