@@ -63,11 +63,12 @@
     - stat_awscli_binary.stat is defined
     - stat_awscli_binary.stat.checksum is defined
 
-- name: create local facts
-  ansible.builtin.template:
-    src: ansible_facts.j2
-    dest: /etc/ansible/facts.d/aws_cli.fact
-    mode: 0755
+- name: create custom fact file
+  bodsch.core.facts:
+    name: aws_cli
+    facts:
+      version: "{{ awscli_version }}"
+      checksum: "{{ awscli_checksum }}"
 
 - name: remove awscli archive
   ansible.builtin.file:
