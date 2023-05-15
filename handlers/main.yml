@@ -1,0 +1,15 @@
+---
+
+- name: changed config files  # noqa no-handler
+  ansible.builtin.debug:
+    msg: "{{ changed_config_files.results | report }}"
+  when:
+    - changed_config_files.changed
+
+- name: changed credentials files  # noqa no-handler
+  ansible.builtin.debug:
+    msg: "{{ changed_credentials_files.results | report }}"
+  when:
+    - changed_credentials_files.changed
+
+...

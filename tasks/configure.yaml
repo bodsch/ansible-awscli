@@ -2,6 +2,7 @@
 
 - name: create ~/.aws directory
   become: true
+  no_log: true
   ansible.builtin.file:
     path: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws"
     owner: "{{ item.key }}"
@@ -15,6 +16,8 @@
 
 - name: create AWS CLI config file
   become: true
+  no_log: true
+  register: changed_config_files
   ansible.builtin.template:
     src: "{{ awscli_config }}"
     dest: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws/config"
@@ -25,12 +28,15 @@
   loop: "{{ awscli_users | dict2items }}"
   loop_control:
     label: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws/config"
+  notify:
+    - changed config files
   when:
     - item.value.profiles is defined
 
 - name: create AWS CLI credentials file
   become: true
   no_log: true
+  register: changed_credentials_files
   ansible.builtin.template:
     src: "{{ awscli_credentials }}"
     dest: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws/credentials"
@@ -41,7 +47,12 @@
   loop: "{{ awscli_users | dict2items }}"
   loop_control:
     label: "{{ item.value.home | default('/home') }}/{{ item.key }}/.aws/credentials"
+  notify:
+    - changed credentials files
   when:
     - item.value.profiles is defined
+
+- name: restart alertmanager if needed
+  ansible.builtin.meta: flush_handlers
 
 ...

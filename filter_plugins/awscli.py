@@ -18,6 +18,7 @@ class FilterModule(object):
     def filters(self):
         return {
             'awscli_version': self.awscli_version,
+            'report': self.report,
         }
 
     def awscli_version(self, data):
@@ -36,6 +37,17 @@ class FilterModule(object):
         # display.v(f"= versions: {versions}")
 
         return versions
+
+    def report(self, data):
+        """
+        """
+        result = []
+
+        if isinstance(data, list):
+            # display.v(f"data: {data}")
+            result = [f"{x.get('dest')} changed" for x in data if x.get("changed", False)]
+
+        return result
 
     def __version_sort(self, versions_list):
         """
