@@ -24,7 +24,7 @@ jobs:
         image:
           - debian:11
         ansible-version:
-          - '7.0'
+          - '6.7'
         scenario:
           - latest
 
