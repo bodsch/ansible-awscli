@@ -8,7 +8,7 @@ galaxy_info:
   description: installs, configures aws-cli tools
 
   license: Apache
-  min_ansible_version: "2.12"
+  min_ansible_version: "2.9"
 
   platforms:
     - name: ArchLinux
@@ -19,16 +19,13 @@ galaxy_info:
         # 10
         - buster
         - bullseye
+        - bookwork
     - name: Ubuntu
       versions:
         # 18.04
         - bionic
         # 20.04
         - focal
-    - name: EL
-      versions:
-        - "7"
-        - "8"
 
   galaxy_tags:
     - awscli
