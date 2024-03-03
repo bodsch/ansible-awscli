@@ -1,6 +1,6 @@
 ---
 
-awscli_version: 2.9.20
+awscli_version: 2.15.25
 
 awscli_download_url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64{{ '' if awscli_version == 'latest' else '-' + awscli_version }}.zip"
 awscli_archiv: "aws-cli{{ '' if awscli_version == 'latest' else '-' + awscli_version }}.zip"

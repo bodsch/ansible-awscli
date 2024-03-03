@@ -20,38 +20,6 @@
         - default.yaml
       skip: true
 
-- name: define delegate instance for download handling
-  ansible.builtin.set_fact:
-    awscli_delegate_to: "{{ ansible_host }}"
-    awscli_local_tmp_directory: "{{
-        lookup('env', 'CUSTOM_LOCAL_TMP_DIRECTORY') |
-        default('/var/cache/ansible/awscli', true) }}/{{ awscli_version }}"
-  when:
-    - awscli_direct_download
-
-- name: get latest tags
-  when:
-    - awscli_version == "latest"
-  become: false
-  delegate_to: localhost
-  run_once: true
-  block:
-    - name: get latest release
-      delegate_to: localhost
-      become: false
-      run_once: true
-      bodsch.scm.github_latest:
-        project: aws
-        repository: aws-cli
-        github_tags: true
-        user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
-        password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
-      register: _latest_release
-
-    - name: re-define awscli_version
-      ansible.builtin.set_fact:
-        awscli_version: "{{ _latest_release.latest_release }}"
-
 - name: python3-apt for debian
   when:
     - ansible_os_family | lower == 'debian'
@@ -119,17 +87,6 @@
         - (awscli_checksum | string | length != 0) or
           (awscli_checksum == stat_awscli_binary.stat.checksum)
 
-- name: create download directory
-  become: false
-  delegate_to: "{{ awscli_delegate_to }}"
-  ansible.builtin.file:
-    path: "{{ awscli_local_tmp_directory }}"
-    state: directory
-    mode: "0750"
-  when:
-    - awscli_versioned_installed is defined
-    - not awscli_versioned_installed.stat.exists
-
 - name: define uninstall awscli
   ansible.builtin.set_fact:
     awscli_uninstall: "{{ awscli_installed_version.version.major is version_compare(awscli_version.split('.') | first, '<') }}"
@@ -145,11 +102,6 @@
     - awscli_installed_version is defined
     - awscli_installed_version.version is defined
     - awscli_installed_version.version.major is defined
-
-# - name: update package cache
-#   become: true
-#   ansible.builtin.package:
-#     update_cache: true
 
 - name: install dependencies
   become: true
@@ -179,9 +131,9 @@
 
     - name: install awscli python packages  # noqa no-handler
       ansible.builtin.pip:
-        executable: pip3
         requirements: "{{ pip_requirements.requirements_file }}"
         state: present
+        extra_args: "{{ awscli_python_extra_args | default([]) | bodsch.core.python_extra_args(python_version=ansible_python.version) | default(omit) }}"
       register: pip_install
       ignore_errors: true
       no_log: true

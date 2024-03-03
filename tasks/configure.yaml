@@ -52,7 +52,7 @@
   when:
     - item.value.profiles is defined
 
-- name: restart alertmanager if needed
+- name: flush handlers
   ansible.builtin.meta: flush_handlers
 
 ...
