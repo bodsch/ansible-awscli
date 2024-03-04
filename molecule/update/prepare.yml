@@ -49,3 +49,13 @@
         - ansible
         - molecule
         - jenkins
+
+- name: converge
+  hosts: all
+  any_errors_fatal: false
+
+  vars:
+    awscli_version: 2.7.21
+
+  roles:
+    - role: ansible-awscli
