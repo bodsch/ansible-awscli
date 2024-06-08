@@ -52,34 +52,6 @@
       ansible.builtin.set_fact:
         awscli_version: "{{ _latest_release.latest_release }}"
 
-- name: python3-apt for debian
-  when:
-    - ansible_os_family | lower == 'debian'
-  block:
-    - name: make sure python3-apt is installed (only debian based)
-      ansible.builtin.package:
-        name:
-          - python3-apt
-        state: present
-      register: _installed
-
-    - name: update apt cache
-      when:
-        - _installed.changed
-      block:
-        - name: clean apt cache  # noqa command-instead-of-module no-handler
-          ansible.builtin.command: |
-            apt-get clean
-          register: apt_clean
-          changed_when: apt_clean.rc != 0
-          failed_when: apt_clean.rc != 0
-          when: "ansible_version.full is version_compare('2.13', '<')"
-
-        - name: clean apt cache  # noqa args[module]
-          ansible.builtin.apt:
-            clean: true
-          when: "ansible_version.full is version_compare('2.13', '>=')"
-
 - name: update facts to get latest information
   ansible.builtin.setup:
 
