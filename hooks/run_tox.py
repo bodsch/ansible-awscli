@@ -13,10 +13,10 @@ from pathlib import Path
 from typing import Optional, List
 from contextlib import contextmanager
 
-logging.basicConfig(level=logging.DEBUG, format="%(levelname)s: %(message)s")
+logging.basicConfig(level=logging.INFO, format="%(levelname)s: %(message)s")
 logger = logging.getLogger(__name__)
 
-VERSION = "2.1.1"
+VERSION = "2.2.0"
 
 
 @contextmanager
@@ -231,27 +231,21 @@ class ToxRunner:
         except Exception as e:
             logging.error(f"manage_collections failed: {e}")
 
-    def _run_for_role(self, role_name: str = None) -> None:
+    def _run_for_role(self) -> None:
         """
         """
-        logging.debug(f"ToxRunner::_run_for_role({role_name})")
-
+        # logging.debug("ToxRunner::_run_for_role()")
         role_path = self.roles_dir
         if not role_path.exists():
             logging.error(f"Role path not found: {role_path}")
             return
-
-        # self._copy_configs(role_path)
 
         if self.tox_test in ["converge", "destroy", "test", "verify"]:
             """
             """
             logging.info(
                 f"Running for role {self.role} and scenario {self.scenario}\n")
-            # env = self.filtered_env
             env = os.environ.copy()
-
-
 
             with chdir(role_path):
                 local_tox_file = Path.cwd() / "tox.ini"
@@ -261,8 +255,6 @@ class ToxRunner:
                     self._run_tox(role_path, env)
                 else:
                     logger.error("missing tox.ini or test-requirements.txt")
-
-            # self._remove_configs(role_path)
 
             return
 
@@ -289,8 +281,6 @@ class ToxRunner:
     def _remove_configs(self, role_path: Path) -> None:
         """
         """
-        logging.debug(f"ToxRunner::_remove_configs({role_path})")
-
         for fname in ['requirements.txt', 'test-requirements.txt', 'tox.ini']:
             dst = role_path / fname
             if dst.is_file():
@@ -355,18 +345,14 @@ class ToxRunner:
     def _safe_symlink(self, target: Path, link_name: Path):
         """
         """
-        logging.debug(f"ToxRunner::_safe_symlink(target: {target}, link_name: {link_name})")
+        # logging.debug(f"ToxRunner::_safe_symlink(target: {target}, link_name: {link_name})")
 
         private_ansible_role_name = self.roles_path / os.path.basename(target)
-
-        logging.debug(f" - from: {target}")
-        logging.debug(f" - to  : {private_ansible_role_name}")
 
         # link for project role name
         if not os.path.exists(private_ansible_role_name):
             private_ansible_role_name.symlink_to(target, target_is_directory=True)
             self.symlinks.append(private_ansible_role_name)
-
         #
         if link_name.exists() or link_name.is_symlink():
             link_name.unlink()
@@ -379,8 +365,7 @@ class ToxRunner:
     def _parse_meta_and_link(self):
         """
         """
-        logging.debug("ToxRunner::_parse_meta_and_link()")
-
+        # logging.debug("ToxRunner::_parse_meta_and_link()")
         for ext in ["yml", "yaml"]:
             meta_path = self.cwd / "meta" / f"main.{ext}"
             if os.path.exists(meta_path):
@@ -392,9 +377,6 @@ class ToxRunner:
 
             self.name = data.get("galaxy_info", {}).get('role_name')
             self.namespace = data.get("galaxy_info", {}).get('namespace')
-
-            logging.debug(self.name)
-            logging.debug(self.namespace)
 
             if self.name and self.namespace:
                 logger.debug(f"\nansible role: {self.namespace}.{self.name}")
