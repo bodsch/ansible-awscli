@@ -1,58 +1,127 @@
 ---
 
-name: code linter
+name: Code Linter
 
 on:
-  schedule:
-    - cron: "10 3 * * 0"
+  push:
+    tags:
+      - "*"
   workflow_dispatch:
     inputs:
-      logLevel:
-        description: 'Log level'
-        required: true
-        default: 'warning'
-        type: choice
-        options:
-          - info
-          - warning
-          - debug
-  push:
-    branches:
-      - 'main'
-      - 'feature/**'
-      - '!doc/**'
-    paths:
-      - "!Makefile"
-      - "!README.md"
-      - "tasks/**"
-  pull_request:
-    branches:
-      - 'main'
-      - 'feature/**'
-      - '!doc/**'
-    paths:
-      - "!Makefile"
-      - "!README.md"
-      - "tasks/**"
+      branch:
+        description: 'Branch to test'
+        required: false
+        default: 'main'
+
+defaults:
+  run:
+    working-directory: 'ansible-awscli'
 
 jobs:
-  lint:
-    name: linting
-    runs-on: ubuntu-latest
+  pycodestyle:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
+
     steps:
-      - name: 🛎 Checkout
+      - name: Show trigger context
+        working-directory: .
+        run: |
+          echo "event: ${{ github.event_name }}"
+          echo "ref (raw): ${{ github.ref }}"
+          echo "ref_name: ${{ github.ref_name }}"
+          echo "manual input: ${{ github.event.inputs.ref }}"
+          echo "head_branch (for PR): ${{ github.head_ref }}"
+
+      - name: Determine ref to checkout
+        working-directory: .
+        id: get-ref
+        run: |
+          # Fallback-Logik für verschiedene Events
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.ref }}" ]; then
+            echo "ref=${{ github.event.inputs.ref }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "ref=${{ github.head_ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout the codebase
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0
+          path: 'ansible-awscli'
+          ref: ${{ steps.get-ref.outputs.ref }}
 
-      - name: lint
-        uses: docker://ghcr.io/github/super-linter:slim-v4
-        env:
-          DEFAULT_BRANCH: main
-          GITHUB_TOKEN: ${{ secrets.GH_REGISTRY_TOKEN }}
-          VALIDATE_ALL_CODEBASE: true
-          VALIDATE_ANSIBLE: true
-          # VALIDATE_MARKDOWN: true
-          VALIDATE_YAML: true
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.python_version }}"
+
+      - name: Install pycodestyle
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install pycodestyle
+
+      - name: Run pycodestyle
+        run: |
+          pycodestyle . --config=.config/pycodestyle.cfg --statistics --count
+
+  flake8:
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        python_version:
+          - "3.11"
+          - "3.12"
+          - "3.13"
+
+    steps:
+      - name: Show trigger context
+        working-directory: .
+        run: |
+          echo "event: ${{ github.event_name }}"
+          echo "ref (raw): ${{ github.ref }}"
+          echo "ref_name: ${{ github.ref_name }}"
+          echo "manual input: ${{ github.event.inputs.ref }}"
+          echo "head_branch (for PR): ${{ github.head_ref }}"
+
+      - name: Determine ref to checkout
+        working-directory: .
+        id: get-ref
+        run: |
+          # Fallback-Logik für verschiedene Events
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.ref }}" ]; then
+            echo "ref=${{ github.event.inputs.ref }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "ref=${{ github.head_ref }}" >> $GITHUB_OUTPUT
+          else
+            echo "ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Checkout the codebase
+        uses: actions/checkout@v4
+        with:
+          path: 'ansible-awscli'
+          ref: ${{ steps.get-ref.outputs.ref }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "${{ matrix.python_version }}"
+
+      - name: Install flake8
+        run: |
+          python3 -m pip install --upgrade pip
+          python3 -m pip install flake8
+
+      - name: Run flake8
+        run: |
+          flake8 --append-config=.config/pycodestyle.cfg --exclude=test_*.py,hooks/*.py
 
 ...

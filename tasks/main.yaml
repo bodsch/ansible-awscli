@@ -7,41 +7,41 @@
     - awscli_configure
     - awscli_run
 
-- name: download
-  ansible.builtin.import_tasks: download.yaml
-  become: true
-  tags:
-    - awscli_install
-  when:
-    - awscli_download or awscli_reinstall
+# - name: download
+#   ansible.builtin.import_tasks: download.yaml
+#   become: true
+#   tags:
+#     - awscli_install
+#   when:
+#     - awscli_download or awscli_reinstall
 
-- name: install
-  ansible.builtin.import_tasks: install.yaml
-  become: true
-  tags:
-    - awscli_install
-  when:
-    - awscli_download or awscli_reinstall
-
-- name: verify installation
-  block:
-    - name: verify installed aws-cli version
-      awscli_version:
-        validate_version: "{{ awscli_version }}"
-      register: awscli_installed_version
-      check_mode: false
-      ignore_errors: true
-
-    - name: installed awscli version
-      ansible.builtin.debug:
-        msg: "{{ awscli_installed_version.msg }}"
-      when:
-        - awscli_installed_version.rc == 0
-
-- name: configure
-  ansible.builtin.import_tasks: configure.yaml
-  become: true
-  tags:
-    - awscli_configure
+# - name: install
+#   ansible.builtin.import_tasks: install.yaml
+#   become: true
+#   tags:
+#     - awscli_install
+#   when:
+#     - awscli_download or awscli_reinstall
+#
+# - name: verify installation
+#   block:
+#     - name: verify installed aws-cli version
+#       awscli_version:
+#         validate_version: "{{ awscli_version }}"
+#       register: awscli_installed_version
+#       check_mode: false
+#       ignore_errors: true
+#
+#     - name: installed awscli version
+#       ansible.builtin.debug:
+#         msg: "{{ awscli_installed_version.msg }}"
+#       when:
+#         - awscli_installed_version.rc == 0
+#
+# - name: configure
+#   ansible.builtin.import_tasks: configure.yaml
+#   become: true
+#   tags:
+#     - awscli_configure
 
 ...
