@@ -20,15 +20,6 @@
         - default.yaml
       skip: true
 
-- name: define delegate instance for download handling
-  ansible.builtin.set_fact:
-    awscli_delegate_to: "{{ ansible_host }}"
-    awscli_local_tmp_directory: "{{
-        lookup('env', 'CUSTOM_LOCAL_TMP_DIRECTORY') |
-        default('/var/cache/ansible/awscli', true) }}/{{ awscli_version }}"
-  when:
-    - awscli_direct_download
-
 - name: get latest tags
   when:
     - awscli_version == "latest"
@@ -43,6 +34,7 @@
       bodsch.scm.github_latest:
         project: aws
         repository: aws-cli
+        github_releases: false
         github_tags: true
         user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
         password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
@@ -51,6 +43,15 @@
     - name: re-define awscli_version
       ansible.builtin.set_fact:
         awscli_version: "{{ _latest_release.latest_release }}"
+
+- name: define delegate instance for download handling
+  ansible.builtin.set_fact:
+    awscli_delegate_to: "{{ ansible_host }}"
+    awscli_local_tmp_directory: "{{
+        lookup('env', 'CUSTOM_LOCAL_TMP_DIRECTORY') |
+        default('/var/cache/ansible/awscli', true) }}/{{ awscli_version }}"
+  when:
+    - awscli_direct_download
 
 - name: update facts to get latest information
   ansible.builtin.setup:

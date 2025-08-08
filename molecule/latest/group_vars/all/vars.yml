@@ -1,6 +1,6 @@
 ---
 
-awscli_version: latest
+awscli_version: "latest"
 
 awscli_users:
   jenkins:
