@@ -1,6 +1,7 @@
 #
 export TOX_SCENARIO         ?= default
 export TOX_ANSIBLE          ?= ansible_9.5
+export TOX_SILENCE          ?= true
 # --------------------------------------------------------
 
 LANG                        := C.UTF-8

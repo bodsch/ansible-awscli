@@ -29,7 +29,7 @@ provisioner:
   name: ansible
   ansible_args:
     - --diff
-    - -vvv
+    - -v
   config_options:
     defaults:
       deprecation_warnings: true
@@ -37,7 +37,7 @@ provisioner:
       callbacks_enabled: profile_tasks
       gathering: smart
       fact_caching: jsonfile
-      fact_caching_timeout: 8640
+      fact_caching_timeout: 320
       fact_caching_connection: ansible_facts
 
 scenario:
