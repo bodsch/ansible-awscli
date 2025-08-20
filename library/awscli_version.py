@@ -32,7 +32,7 @@ class AwsCliVersion(object):
             rc=127,
             failed=True,
             changed=False,
-            full_version = "unknown"
+            full_version="unknown"
         )
 
         if not self.awscli:
@@ -40,7 +40,7 @@ class AwsCliVersion(object):
                 rc=0,
                 failed=False,
                 changed=False,
-                msg = "no awscli installed"
+                msg="no awscli installed"
             )
 
         rc, out, err = self._exec(['--version'])
@@ -66,16 +66,16 @@ class AwsCliVersion(object):
                     msg = f"version {self.validate_version} not installed."
 
             result = dict(
-                failed = _failed,
-                rc = 0,
+                failed=_failed,
+                rc=0,
                 msg=msg,
-                full_version = version_full_string,
-                version = dict(
-                    major = int(version_major_string),
-                    minor = int(version_minor_string),
-                    patch = int(version_patch_string)
+                full_version=version_full_string,
+                version=dict(
+                    major=int(version_major_string),
+                    minor=int(version_minor_string),
+                    patch=int(version_patch_string)
                 ),
-                excutable = self.awscli
+                excutable=self.awscli
             )
 
         return result
