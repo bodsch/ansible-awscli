@@ -12,16 +12,18 @@
   become: true
   tags:
     - awscli_install
-  when:
-    - awscli_download or awscli_reinstall
+
+- name: versions
+  ansible.builtin.import_tasks: versions.yaml
+  become: true
+  tags:
+    - awscli_install
 
 - name: install
   ansible.builtin.import_tasks: install.yaml
   become: true
   tags:
     - awscli_install
-  when:
-    - awscli_download or awscli_reinstall
 
 - name: verify installation
   block:

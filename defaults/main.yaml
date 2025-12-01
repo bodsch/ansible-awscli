@@ -1,6 +1,8 @@
 ---
 
-awscli_version: 2.22.17
+awscli_version: 2.32.7
+
+awscli_force_install: false
 
 awscli_download_url: "https://awscli.amazonaws.com/awscli-exe-linux-x86_64{{ '' if awscli_version == 'latest' else '-' + awscli_version }}.zip"
 awscli_archiv: "aws-cli{{ '' if awscli_version == 'latest' else '-' + awscli_version }}.zip"
