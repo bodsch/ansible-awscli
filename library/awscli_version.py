@@ -1,7 +1,7 @@
-#!/usr/bin/env python3
+#!/usr/bin/python3
 # -*- coding: utf-8 -*-
 
-# (c) 2021, Bodo Schulz <bodo@boone-schulz.de>
+# (c) 2021-2025, Bodo Schulz <bodo@boone-schulz.de>
 
 from __future__ import absolute_import, division, print_function
 
@@ -12,7 +12,6 @@ from ansible.module_utils.basic import AnsibleModule
 
 class AwsCliVersion(object):
     """
-    Main Class
     """
 
     module = None
@@ -24,22 +23,25 @@ class AwsCliVersion(object):
         self.module = module
 
         self.validate_version = module.params.get("validate_version")
-        self.awscli = module.get_bin_path("aws", False)
+        self.excutable = module.params.get("excutable")
+        if self.excutable:
+            self.awscli = module.get_bin_path(self.excutable, False)
+        else:
+            self.awscli = module.get_bin_path("aws", False)
 
     def run(self):
         """
-        runner
         """
         result = dict(rc=127, failed=True, changed=False, full_version="unknown")
 
         if not self.awscli:
-            return dict(rc=0, failed=False, changed=False, msg="no awscli installed")
+            return dict(rc=2, failed=False, changed=False, msg="no awscli installed")
 
         rc, out, err = self._exec(["--version"])
 
         if rc == 0:
-            _failed = True
-            msg = "unknown message"
+            _failed = False
+            msg = ""
 
             pattern = re.compile(
                 r"^aws-cli\/(?P<version>(?P<major>\d+).(?P<minor>\d+).(?P<patch>\*|\d+)).*"
@@ -85,22 +87,20 @@ class AwsCliVersion(object):
         return rc, out, err
 
 
-# ===========================================
-# Module execution.
-#
-
-
 def main():
 
     module = AnsibleModule(
-        argument_spec=dict(validate_version=dict(required=False, type="str")),
+        argument_spec=dict(
+            validate_version=dict(required=False, type="str"),
+            excutable=dict(required=False, type="str"),
+        ),
         supports_check_mode=True,
     )
 
-    icinga = AwsCliVersion(module)
-    result = icinga.run()
+    aws = AwsCliVersion(module)
+    result = aws.run()
 
-    module.log(msg="= result: {}".format(result))
+    module.log(f"= result: {result}")
 
     module.exit_json(**result)
 

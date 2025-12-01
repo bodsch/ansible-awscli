@@ -1,6 +1,88 @@
 ---
 
-- name: "uninstall installed awscli version {{ awscli_installed_version.full_version }}"
+- name: python support
+  when:
+    - awscli_python_packages is defined
+    - awscli_python_packages | count > 0
+  block:
+
+    - name: create pip requirements file
+      bodsch.core.pip_requirements:
+        name: awscli
+        requirements: "{{ awscli_python_packages }}"
+      register: pip_requirements
+
+    - name: fail if pip not installed
+      ansible.builtin.fail:
+        msg: python pip is not installed
+      when:
+        - not pip_requirements.pip.present
+
+    - name: install awscli python packages  # noqa no-handler
+      ansible.builtin.pip:
+        requirements: "{{ pip_requirements.requirements_file }}"
+        state: present
+        extra_args: "{{ awscli_python_extra_args | default([]) | bodsch.core.python_extra_args(python_version=ansible_facts.python.version) | default(omit) }}"
+      register: pip_install
+      ignore_errors: true
+      no_log: true
+      when:
+        - pip_requirements.requirements_file is defined
+        - pip_requirements.changed
+
+- name: create download directory
+  ansible.builtin.file:
+    path: "{{ awscli_tmp_directory }}"
+    state: directory
+    mode: "0750"
+  check_mode: false
+
+- name: detect the downloaded awscli archive
+  become: false
+  delegate_to: "{{ awscli_delegate_to }}"
+  run_once: "{{ 'false' if awscli_direct_download else 'true' }}"
+  ansible.builtin.stat:
+    path: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
+  register: stat_downloaded_archive
+
+- name: detect the propagated awscli archive
+  ansible.builtin.stat:
+    path: "{{ awscli_tmp_directory }}/{{ awscli_archiv }}"
+  register: stat_propagated_archive
+
+- name: fail when downloaded archive are missing
+  ansible.builtin.fail:
+    msg: "missing extracted binary on ansible controller"
+  when:
+    - not running_in_check_mode
+    - not stat_downloaded_archive.stat.exists
+
+- name: propagate awscli
+  when:
+    - not running_in_check_mode
+    - stat_downloaded_archive.stat.exists
+    - not stat_propagated_archive.stat.exists
+  block:
+    - name: propagate awscli
+      ansible.builtin.copy:
+        src: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
+        dest: "{{ awscli_tmp_directory }}/{{ awscli_archiv }}"
+        mode: 0750
+        owner: root
+        group: root
+        remote_src: "{{ 'true' if awscli_direct_download else 'false' }}"
+
+  rescue:
+    - name: delete install directory
+      ansible.builtin.file:
+        path: "{{ awscli_tmp_directory }}"
+        state: absent
+
+    - name: exit with fail
+      ansible.builtin.fail:
+        msg: A serious error occurred during the installation of the binary.
+
+- name: "uninstall installed awscli package. version {{ awscli_installed_version.full_version }}"
   ansible.builtin.package:
     name: awscli
     state: absent
@@ -10,12 +92,13 @@
     - awscli_installed_version.version.major is defined
     - awscli_installed_version.version.major | int == 1
 
-- name: remove old awscli version
+- name: "remove old awscli version (force: {{ awscli_force_install }})"
   when:
-    - awscli_reinstall is defined
-    - awscli_reinstall
-    - awscli_installed_version is defined
-    - awscli_installed_version.full_version is defined
+    - awscli_force_install or
+      (
+        awscli_reinstall is defined and awscli_reinstall and
+        awscli_installed_version is defined and awscli_installed_version.full_version is defined
+      )
   block:
     - name: remove old awscli version {{ awscli_installed_version.full_version }}
       ansible.builtin.file:
@@ -30,56 +113,64 @@
 
 - name: extract awscli archive
   ansible.builtin.unarchive:
-    src: "/tmp/{{ awscli_archiv }}"
+    src: "{{ awscli_tmp_directory }}/{{ awscli_archiv }}"
     dest: "/var/tmp"
     copy: false
   no_log: true
 
-- name: install awscli
-  become: true
-  ansible.builtin.command: /var/tmp/aws/install
-  args:
-    chdir: /var/tmp/aws/
-  changed_when: false
-
-- name: create version link to aws
-  ansible.builtin.file:
-    src: "/usr/local/bin/aws"
-    dest: "/usr/local/bin/aws_{{ awscli_version }}"
-    state: link
-    force: true
-
-- name: detect the installed binary
-  ansible.builtin.stat:
-    path: /usr/local/aws-cli/v2/current/dist/aws
-  register: stat_awscli_binary
+- name: detect extraced aws-cli version
+  awscli_version:
+    excutable: "/var/tmp/aws/dist/aws"
+  register: awscli_extraced_version
+  check_mode: false
   ignore_errors: true
 
-- name: define awscli binary checksum
-  ansible.builtin.set_fact:
-    awscli_checksum: "{{ stat_awscli_binary.stat.checksum }}"
+- name: run installer
+  become: true
   when:
-    - stat_awscli_binary is defined
-    - stat_awscli_binary.stat is defined
-    - stat_awscli_binary.stat.checksum is defined
+    - awscli_installed_version.full_version | default("0.0.0") != awscli_extraced_version.full_version
 
-- name: create custom fact file
-  bodsch.core.facts:
-    name: aws_cli
-    facts:
-      version: "{{ awscli_version }}"
-      checksum: "{{ awscli_checksum }}"
+  block:
+    - name: install awscli
+      become: true
+      ansible.builtin.command: /var/tmp/aws/install
+      args:
+        chdir: /var/tmp/aws/
+      changed_when: false
 
-- name: remove awscli archive
-  ansible.builtin.file:
-    path: "/tmp/{{ awscli_archiv }}"
-    state: absent
-  no_log: true
+    - name: create version link to aws
+      ansible.builtin.file:
+        src: "/usr/local/bin/aws"
+        dest: "/usr/local/bin/aws_{{ awscli_version }}"
+        state: link
+        force: true
 
-- name: remove temporary awscli install files
-  ansible.builtin.file:
-    path: "/var/tmp/aws"
-    state: absent
-  no_log: true
+    - name: detect the installed binary
+      ansible.builtin.stat:
+        path: /usr/local/aws-cli/v2/current/dist/aws
+      register: stat_awscli_binary
+      ignore_errors: true
+
+    - name: define awscli binary checksum
+      ansible.builtin.set_fact:
+        awscli_checksum: "{{ stat_awscli_binary.stat.checksum }}"
+      when:
+        - stat_awscli_binary is defined
+        - stat_awscli_binary.stat is defined
+        - stat_awscli_binary.stat.checksum is defined
+
+    - name: create custom fact file
+      bodsch.core.facts:
+        name: aws_cli
+        facts:
+          version: "{{ awscli_version }}"
+          checksum: "{{ awscli_checksum }}"
+
+# breaks idempotence
+# - name: remove temporary awscli install files
+#   ansible.builtin.file:
+#     path: "/var/tmp/aws"
+#     state: absent
+#   no_log: true
 
 ...

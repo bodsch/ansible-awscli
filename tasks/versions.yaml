@@ -1,0 +1,59 @@
+---
+
+- name: update facts to get latest information
+  ansible.builtin.setup:
+
+- name: detect if awscli {{ awscli_version }} is present
+  ansible.builtin.stat:
+    path: "/usr/local/bin/aws_{{ awscli_version }}"
+  register: awscli_versioned_installed
+
+- name: define installed aws-cli version
+  awscli_version:
+    validate_version: "{{ awscli_version }}"
+  register: awscli_installed_version
+  check_mode: false
+  ignore_errors: true
+
+- name: define checksum
+  when:
+    - awscli_versioned_installed.stat.exists
+  block:
+    - name: detect checksum for awscli {{ awscli_version }}
+      ansible.builtin.stat:
+        path: /usr/local/aws-cli/v2/current/dist/aws
+      register: stat_awscli_binary
+      ignore_errors: true
+
+    - name: define local fact for awscli
+      ansible.builtin.set_fact:
+        awscli_checksum: "{{ ansible_facts.local.aws_cli.checksum }}"
+      when:
+        - ansible_facts.local is defined
+        - ansible_facts.local.aws_cli is defined
+        - ansible_facts.local.aws_cli.checksum is defined
+        - ansible_facts.local.aws_cli.checksum | default('') | length > 0
+
+    - name: define awscli download
+      ansible.builtin.set_fact:
+        awscli_download: false
+      when:
+        - awscli_checksum is defined
+        - (awscli_checksum | default("") | string | length != 0) or
+          (awscli_checksum | default("y") == stat_awscli_binary.stat.checksum | default("x") )
+
+- name: define uninstall awscli
+  ansible.builtin.set_fact:
+    awscli_uninstall: "{{ awscli_installed_version.version.major is version_compare(awscli_version.split('.') | first, '<') }}"
+  when:
+    - awscli_installed_version is defined
+    - awscli_installed_version.version is defined
+    - awscli_installed_version.version.major is defined
+
+- name: define reinstall awscli
+  ansible.builtin.set_fact:
+    awscli_reinstall: "{{ awscli_installed_version.full_version is version_compare(awscli_version, '!=') }}"
+  when:
+    - awscli_installed_version is defined
+    - awscli_installed_version.version is defined
+    - awscli_installed_version.version.major is defined

@@ -1,25 +1,112 @@
 ---
 
-- name: download awscli archiv to local folder
+- name: get latest tags
+  delegate_to: localhost
+  become: false
+  run_once: true
+  when:
+    - awscli_version == "latest"
+  block:
+    - name: get latest release
+      delegate_to: localhost
+      become: false
+      run_once: true
+      bodsch.scm.github_latest:
+        project: aws
+        repository: aws-cli
+        github_releases: false
+        github_tags: true
+        user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
+        password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
+      register: _latest_release
+
+    - name: re-define awscli_version
+      ansible.builtin.set_fact:
+        awscli_version: "{{ _latest_release.latest_release }}"
+
+- name: define delegate instance for download handling
+  ansible.builtin.set_fact:
+    awscli_delegate_to: "{{ ansible_facts.host }}"
+    awscli_local_tmp_directory: "{{
+        lookup('env', 'CUSTOM_LOCAL_TMP_DIRECTORY') |
+        default('/var/cache/ansible/awscli', true) }}/{{ awscli_version }}"
+  when:
+    - awscli_direct_download
+
+- name: create download directory
   become: false
   delegate_to: "{{ awscli_delegate_to }}"
-  ansible.builtin.get_url:
-    url: "{{ awscli_download_url }}"
-    dest: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
-    mode: 0640
-  register: _download_archive
-  until: _download_archive is succeeded
-  retries: 5
-  delay: 2
+  run_once: "{{ 'false' if awscli_direct_download else 'true' }}"
+  ansible.builtin.file:
+    path: "{{ awscli_local_tmp_directory }}"
+    state: directory
+    mode: "0750"
   check_mode: false
 
-- name: propagate awscli
-  ansible.builtin.copy:
-    src: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
-    dest: "/tmp/{{ awscli_archiv }}"
-    mode: 0750
-    owner: root
-    group: root
-    remote_src: "{{ 'true' if awscli_direct_download else 'false' }}"
+- name: detect the downloaded awscli archive
+  become: false
+  delegate_to: "{{ awscli_delegate_to }}"
+  run_once: "{{ 'false' if awscli_direct_download else 'true' }}"
+  ansible.builtin.stat:
+    path: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
+  register: stat_awscli_archive
+
+- name: download
+  when:
+    - stat_awscli_archive.stat is defined
+    - not stat_awscli_archive.stat.exists | default('false')
+    - not running_in_check_mode
+  block:
+    # - name: checksum
+    #   become: false
+    #   delegate_to: localhost
+    #   run_once: true
+    #   block:
+    #     - name: get checksum list
+    #       bodsch.scm.github_checksum:
+    #         project: aws
+    #         repository: aws-cli
+    #         checksum_file: sha256sums.txt
+    #         user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
+    #         password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
+    #         architecture: "{{ ansible_architecture }}"
+    #         system: "{{ ansible_facts.system }}"
+    #         version: "v{{ awscli_version }}"
+    #       register: _latest_checksum
+    #
+    #     - name: define checksum for {{ system_architecture }} architecture
+    #       ansible.builtin.set_fact:
+    #         __awscli_checksum: "sha256:{{ _latest_checksum.checksum }}"
+    #       when:
+    #         - _latest_checksum.rc == 0
+    #         - _latest_checksum.checksum is defined
+    #         - _latest_checksum.checksum | string | length > 0
+
+    - name: download awscli binary archive
+      become: false
+      delegate_to: "{{ awscli_delegate_to }}"
+      run_once: "{{ 'false' if awscli_direct_download else 'true' }}"
+      ansible.builtin.get_url:
+        url: "{{ awscli_download_url }}"
+        dest: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
+        # checksum: "{{ __awscli_checksum | default(omit) }}"
+        mode: 0660
+      register: _download_archive
+      until: _download_archive is succeeded
+      retries: 5
+      delay: 2
+
+  rescue:
+    - name: delete download directory
+      become: false
+      delegate_to: "{{ awscli_delegate_to }}"
+      run_once: "{{ 'false' if awscli_direct_download else 'true' }}"
+      ansible.builtin.file:
+        path: "{{ awscli_local_tmp_directory }}"
+        state: absent
+
+    - name: exit with fail
+      ansible.builtin.fail:
+        msg: A serious error occurred when downloading the archive.
 
 ...
