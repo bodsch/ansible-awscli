@@ -1,6 +1,6 @@
 ---
 
-- name: include OS specific configuration ({{ ansible_distribution }} ({{ ansible_os_family }}) {{ ansible_distribution_major_version }})
+- name: include OS specific configuration ({{ ansible_facts.distribution }} ({{ ansible_facts.os_family }}) {{ ansible_facts.distribution_major_version }})
   ansible.builtin.include_vars: "{{ lookup('first_found', params) }}"
   vars:
     params:
@@ -8,15 +8,15 @@
         - "vars"
       files:
         # eg. debian-10 / ubuntu-20.04 / centos-8 / oraclelinux-8
-        - "{{ ansible_distribution | lower }}-{{ ansible_distribution_major_version }}.yml"
+        - "{{ ansible_facts.distribution | lower }}-{{ ansible_facts.distribution_major_version }}.yml"
         # eg. archlinux-systemd / archlinux-openrc
-        - "{{ ansible_distribution | lower }}-{{ ansible_service_mgr | lower }}.yml"
+        - "{{ ansible_facts.distribution | lower }}-{{ ansible_facts.service_mgr | lower }}.yml"
         # eg. debian / ubuntu / centos / oraclelinux
-        - "{{ ansible_distribution | lower }}.yml"
+        - "{{ ansible_facts.distribution | lower }}.yml"
         # eg. redhat / debian / archlinux
-        - "{{ ansible_os_family | lower }}.yml"
+        - "{{ ansible_facts.os_family | lower }}.yml"
         # artixlinux
-        - "{{ ansible_os_family | lower | replace(' ', '') }}.yml"
+        - "{{ ansible_facts.os_family | lower | replace(' ', '') }}.yml"
         - default.yaml
       skip: true
 
@@ -46,7 +46,7 @@
 
 - name: define delegate instance for download handling
   ansible.builtin.set_fact:
-    awscli_delegate_to: "{{ ansible_host }}"
+    awscli_delegate_to: "{{ ansible_facts.host }}"
     awscli_local_tmp_directory: "{{
         lookup('env', 'CUSTOM_LOCAL_TMP_DIRECTORY') |
         default('/var/cache/ansible/awscli', true) }}/{{ awscli_version }}"
@@ -80,10 +80,10 @@
 
     - name: define local fact for awscli
       ansible.builtin.set_fact:
-        awscli_checksum: "{{ ansible_local.aws_cli.checksum }}"
+        awscli_checksum: "{{ ansible_facts.local.aws_cli.checksum }}"
       when:
-        - ansible_local.aws_cli.checksum is defined
-        - ansible_local.aws_cli.checksum | default('') | length > 0
+        - ansible_facts.local.aws_cli.checksum is defined
+        - ansible_facts.local.aws_cli.checksum | default('') | length > 0
 
     - name: define awscli download
       ansible.builtin.set_fact:
@@ -149,7 +149,7 @@
       ansible.builtin.pip:
         requirements: "{{ pip_requirements.requirements_file }}"
         state: present
-        extra_args: "{{ awscli_python_extra_args | default([]) | bodsch.core.python_extra_args(python_version=ansible_python.version) | default(omit) }}"
+        extra_args: "{{ awscli_python_extra_args | default([]) | bodsch.core.python_extra_args(python_version=ansible_facts.python.version) | default(omit) }}"
       register: pip_install
       ignore_errors: true
       no_log: true

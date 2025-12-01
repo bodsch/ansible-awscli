@@ -1,38 +1,12 @@
 ---
-
-name: Build & Test
+name: CI
 
 on:
-  schedule:
-    - cron: "0 4 * * 0"
-  push:
-    branches:
-      - 'main'
-      - 'feature/**'
-      - 'fix/**'
-      - '!doc/**'
-    # paths:
-    #   - 'filter_plugins/*.py'
-    #   - '!.github/workflows/*.yml'
-    #   - '!doc/**'
-    #   - '.config/pycodestyle.cfg'
-  pull_request:
-    branches:
-      - 'main'
-      - 'feature/**'
-      - 'fix/**'
-      - '!doc/**'
-    # paths:
-    #   - 'filter_plugins/*.py'
-    #   - '!.github/workflows/*.yml'
-    #   - '!doc/**'
-    #   - '.config/pycodestyle.cfg'
-  workflow_dispatch:
-    inputs:
-      branch:
-        description: 'Branch to test'
-        required: false
-        default: 'main'
+  workflow_run:
+    workflows:
+      - "code linter"
+    types:
+      - completed
 
 defaults:
   run:
@@ -43,64 +17,46 @@ env:
   ANSIBLE_FORCE_COLOR: '1'
 
 jobs:
+
   arch:
-    name: "${{ matrix.image }} / ansible ${{ matrix.ansible-version }} / python ${{ matrix.python }}"
+    name: "${{ matrix.image }} / ansible: ${{ matrix.ansible-version }}, python: ${{ matrix.python_version }}"
     runs-on: ubuntu-22.04
+    if: ${{ github.event_name == 'schedule' || github.event.workflow_run.conclusion == 'success' }}
     strategy:
       fail-fast: false
       matrix:
         image:
           - archlinux:latest
           - artixlinux:latest
-        python_version:
-          - "3.12"
         ansible-version:
           - '9.5'
+        python_version:
+          - '3.12'
+          - '3.13'
         scenario:
           - default
 
     steps:
-      - name: Show trigger context
-        working-directory: .
-        run: |
-          echo "event: ${{ github.event_name }}"
-          echo "ref (raw): ${{ github.ref }}"
-          echo "ref_name: ${{ github.ref_name }}"
-          echo "manual input: ${{ github.event.inputs.ref }}"
-          echo "head_branch (for PR): ${{ github.head_ref }}"
-
-      - name: Determine ref to checkout
-        working-directory: .
-        id: get-ref
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.ref }}" ]; then
-            echo "ref=${{ github.event.inputs.ref }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "ref=${{ github.head_ref }}" >> $GITHUB_OUTPUT
-          else
-            echo "ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
-          fi
-
       - name: check out the codebase.
         uses: actions/checkout@v4
         with:
           path: 'ansible-awscli'
-          ref: ${{ steps.get-ref.outputs.ref }}
+          ref: ${{ github.event.workflow_run.head_branch }}
 
       - name: 🐍 set up python
         uses: actions/setup-python@v5
         with:
           python-version: "${{ matrix.python_version }}"
 
-      - name: Install system packages
-        run: |
-          sudo apt-get update -y
-          sudo apt-get install -y python3-dateutil
-
       - name: install dependencies
         run: |
           python -m pip install --upgrade pip
           pip install -r test-requirements.txt
+
+      - name: Install system packages
+        run: |
+          sudo apt-get update -y
+          sudo apt-get install -y python3-dateutil
 
       - name: force reinstall of community.docker
         run: |
