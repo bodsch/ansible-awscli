@@ -1,11 +1,12 @@
 ---
 
 - name: get latest tags
+  when:
+    - not running_in_check_mode
+    - awscli_version == "latest"
   delegate_to: localhost
   become: false
   run_once: true
-  when:
-    - awscli_version == "latest"
   block:
     - name: get latest release
       delegate_to: localhost
@@ -25,15 +26,18 @@
         awscli_version: "{{ _latest_release.latest_release }}"
 
 - name: define delegate instance for download handling
+  when:
+    - not running_in_check_mode
+    - awscli_direct_download
   ansible.builtin.set_fact:
     awscli_delegate_to: "{{ ansible_facts.host }}"
     awscli_local_tmp_directory: "{{
         lookup('env', 'CUSTOM_LOCAL_TMP_DIRECTORY') |
         default('/var/cache/ansible/awscli', true) }}/{{ awscli_version }}"
-  when:
-    - awscli_direct_download
 
 - name: create download directory
+  when:
+    - not running_in_check_mode
   become: false
   delegate_to: "{{ awscli_delegate_to }}"
   run_once: "{{ 'false' if awscli_direct_download else 'true' }}"
@@ -53,9 +57,9 @@
 
 - name: download
   when:
+    - not running_in_check_mode
     - stat_awscli_archive.stat is defined
     - not stat_awscli_archive.stat.exists | default('false')
-    - not running_in_check_mode
   block:
     # - name: checksum
     #   become: false
@@ -69,7 +73,7 @@
     #         checksum_file: sha256sums.txt
     #         user: "{{ lookup('env', 'GH_USER') | default(omit) }}"
     #         password: "{{ lookup('env', 'GH_TOKEN') | default(omit) }}"
-    #         architecture: "{{ ansible_architecture }}"
+    #         architecture: "{{ ansible_facts.architecture }}"
     #         system: "{{ ansible_facts.system }}"
     #         version: "v{{ awscli_version }}"
     #       register: _latest_checksum
@@ -90,7 +94,7 @@
         url: "{{ awscli_download_url }}"
         dest: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
         # checksum: "{{ __awscli_checksum | default(omit) }}"
-        mode: 0660
+        mode: "0660"
       register: _download_archive
       until: _download_archive is succeeded
       retries: 5

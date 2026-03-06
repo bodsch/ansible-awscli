@@ -98,4 +98,28 @@ jobs:
         run: |
           flake8 --append-config=.config/pycodestyle.cfg
 
+  yamllint:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+
+    steps:
+      - name: check out the codebase.
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_branch }}
+
+      - name: set up python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: install yamllint
+        run: |
+          python3 -m pip install yamllint
+          python3 -m pip install ansible-lint
+
+      - name: run yamllint
+        run: |
+          yamllint .
 ...

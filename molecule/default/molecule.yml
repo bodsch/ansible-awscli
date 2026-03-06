@@ -36,6 +36,7 @@ provisioner:
       callbacks_enabled: profile_tasks
       gathering: smart
       fact_caching_timeout: 320
+
 scenario:
   test_sequence:
     - destroy
@@ -46,5 +47,6 @@ scenario:
     - idempotence
     - verify
     - destroy
+
 verifier:
   name: testinfra

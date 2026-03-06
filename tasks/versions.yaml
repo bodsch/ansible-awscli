@@ -1,14 +1,20 @@
 ---
 
 - name: update facts to get latest information
+  when:
+    - not running_in_check_mode
   ansible.builtin.setup:
 
 - name: detect if awscli {{ awscli_version }} is present
+  when:
+    - not running_in_check_mode
   ansible.builtin.stat:
     path: "/usr/local/bin/aws_{{ awscli_version }}"
   register: awscli_versioned_installed
 
 - name: define installed aws-cli version
+  when:
+    - not running_in_check_mode
   awscli_version:
     validate_version: "{{ awscli_version }}"
   register: awscli_installed_version
@@ -17,6 +23,7 @@
 
 - name: define checksum
   when:
+    - not running_in_check_mode
     - awscli_versioned_installed.stat.exists
   block:
     - name: detect checksum for awscli {{ awscli_version }}
@@ -43,17 +50,19 @@
           (awscli_checksum | default("y") == stat_awscli_binary.stat.checksum | default("x") )
 
 - name: define uninstall awscli
+  when:
+    - not running_in_check_mode
+    - awscli_installed_version is defined
+    - awscli_installed_version.version is defined
+    - awscli_installed_version.version.major is defined
   ansible.builtin.set_fact:
     awscli_uninstall: "{{ awscli_installed_version.version.major is version_compare(awscli_version.split('.') | first, '<') }}"
-  when:
-    - awscli_installed_version is defined
-    - awscli_installed_version.version is defined
-    - awscli_installed_version.version.major is defined
 
 - name: define reinstall awscli
-  ansible.builtin.set_fact:
-    awscli_reinstall: "{{ awscli_installed_version.full_version is version_compare(awscli_version, '!=') }}"
   when:
+    - not running_in_check_mode
     - awscli_installed_version is defined
     - awscli_installed_version.version is defined
     - awscli_installed_version.version.major is defined
+  ansible.builtin.set_fact:
+    awscli_reinstall: "{{ awscli_installed_version.full_version is version_compare(awscli_version, '!=') }}"

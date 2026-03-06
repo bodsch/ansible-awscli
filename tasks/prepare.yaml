@@ -29,11 +29,12 @@
     running_in_check_mode: '{{ _check_mode.check_mode }}'
 
 - name: install dependencies
+  when:
+    - not running_in_check_mode
+    - awscli_dependencies | default([]) | count > 0
   become: true
   ansible.builtin.package:
     name: "{{ awscli_dependencies }}"
     state: present
-  when:
-    - awscli_dependencies | default([]) | count > 0
 
 ...

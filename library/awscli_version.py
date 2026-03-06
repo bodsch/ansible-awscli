@@ -11,8 +11,7 @@ from ansible.module_utils.basic import AnsibleModule
 
 
 class AwsCliVersion(object):
-    """
-    """
+    """ """
 
     module = None
 
@@ -30,8 +29,7 @@ class AwsCliVersion(object):
             self.awscli = module.get_bin_path("aws", False)
 
     def run(self):
-        """
-        """
+        """ """
         result = dict(rc=127, failed=True, changed=False, full_version="unknown")
 
         if not self.awscli:

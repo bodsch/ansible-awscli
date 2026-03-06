@@ -2,6 +2,7 @@
 
 - name: python support
   when:
+    - not running_in_check_mode
     - awscli_python_packages is defined
     - awscli_python_packages | count > 0
   block:
@@ -31,6 +32,8 @@
         - pip_requirements.changed
 
 - name: create download directory
+  when:
+    - not running_in_check_mode
   ansible.builtin.file:
     path: "{{ awscli_tmp_directory }}"
     state: directory
@@ -38,6 +41,8 @@
   check_mode: false
 
 - name: detect the downloaded awscli archive
+  when:
+    - not running_in_check_mode
   become: false
   delegate_to: "{{ awscli_delegate_to }}"
   run_once: "{{ 'false' if awscli_direct_download else 'true' }}"
@@ -46,16 +51,18 @@
   register: stat_downloaded_archive
 
 - name: detect the propagated awscli archive
+  when:
+    - not running_in_check_mode
   ansible.builtin.stat:
     path: "{{ awscli_tmp_directory }}/{{ awscli_archiv }}"
   register: stat_propagated_archive
 
 - name: fail when downloaded archive are missing
-  ansible.builtin.fail:
-    msg: "missing extracted binary on ansible controller"
   when:
     - not running_in_check_mode
     - not stat_downloaded_archive.stat.exists
+  ansible.builtin.fail:
+    msg: "missing extracted binary on ansible controller"
 
 - name: propagate awscli
   when:
@@ -67,7 +74,7 @@
       ansible.builtin.copy:
         src: "{{ awscli_local_tmp_directory }}/{{ awscli_archiv }}"
         dest: "{{ awscli_tmp_directory }}/{{ awscli_archiv }}"
-        mode: 0750
+        mode: "0750"
         owner: root
         group: root
         remote_src: "{{ 'true' if awscli_direct_download else 'false' }}"
@@ -83,17 +90,19 @@
         msg: A serious error occurred during the installation of the binary.
 
 - name: "uninstall installed awscli package. version {{ awscli_installed_version.full_version }}"
-  ansible.builtin.package:
-    name: awscli
-    state: absent
   when:
+    - not running_in_check_mode
     - awscli_installed_version is defined
     - awscli_installed_version.version is defined
     - awscli_installed_version.version.major is defined
     - awscli_installed_version.version.major | int == 1
+  ansible.builtin.package:
+    name: awscli
+    state: absent
 
 - name: "remove old awscli version (force: {{ awscli_force_install }})"
   when:
+    - not running_in_check_mode
     - awscli_force_install or
       (
         awscli_reinstall is defined and awscli_reinstall and
@@ -112,6 +121,8 @@
         path: "/usr/local/bin/aws_{{ awscli_installed_version.full_version }}"
 
 - name: extract awscli archive
+  when:
+    - not running_in_check_mode
   ansible.builtin.unarchive:
     src: "{{ awscli_tmp_directory }}/{{ awscli_archiv }}"
     dest: "/var/tmp"
@@ -119,6 +130,8 @@
   no_log: true
 
 - name: detect extraced aws-cli version
+  when:
+    - not running_in_check_mode
   awscli_version:
     excutable: "/var/tmp/aws/dist/aws"
   register: awscli_extraced_version
@@ -126,10 +139,10 @@
   ignore_errors: true
 
 - name: run installer
-  become: true
   when:
+    - not running_in_check_mode
     - awscli_installed_version.full_version | default("0.0.0") != awscli_extraced_version.full_version
-
+  become: true
   block:
     - name: install awscli
       become: true

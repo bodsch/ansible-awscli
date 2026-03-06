@@ -26,6 +26,8 @@
     - awscli_install
 
 - name: verify installation
+  when:
+    - not running_in_check_mode
   block:
     - name: verify installed aws-cli version
       awscli_version:
