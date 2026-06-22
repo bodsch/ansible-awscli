@@ -1,6 +1,6 @@
 ---
 
-awscli_version: 2.32.7
+awscli_version: 2.35.9
 
 awscli_force_install: false
 
